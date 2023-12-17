@@ -199,6 +199,7 @@ def main(width = 128, height = 128, is_resizable = False):
         pygame.display.flip()
 
     pygame.quit()
+    return (selection_rect.left, selection_rect.top, selection_rect.right, selection_rect.bottom)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
