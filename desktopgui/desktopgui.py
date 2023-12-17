@@ -1,15 +1,20 @@
 """Desktop application for managing the LED matrix.
 """
 
+import collections
 import pathlib
 import sys
 import time
 
-from PIL import ImageGrab, ImageQt
+from PIL import ImageGrab, ImageQt, Image
 
 from screengrab import main as screengrab
 
 from PyQt6 import QtCore, QtGui, QtWidgets, uic
+
+Resolution = collections.namedtuple("Resolution", ["width", "height"])
+
+DISPLAY_RESOLUTION = Resolution(width=128, height=128)
 
 class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
@@ -46,10 +51,12 @@ class DesktopApp(QtWidgets.QApplication):
   def _grab_image(self):
     assert self._grab_bbox is not None
     print(self._grab_bbox)
-    img = ImageGrab.grab(bbox=self._grab_bbox)
-    qt_img = ImageQt.ImageQt(img)
-    qt_pix = QtGui.QPixmap.fromImage(qt_img)
-    self._window.label_matrix_preview.setPixmap(qt_pix)
+    self._img = ImageGrab.grab(bbox=self._grab_bbox)
+    if self._img.width != DISPLAY_RESOLUTION.width or self._img.height != DISPLAY_RESOLUTION.height:
+      self._img = self._img.resize((DISPLAY_RESOLUTION.width,DISPLAY_RESOLUTION.height), resample=Image.BILINEAR)
+    self._qt_img = ImageQt.ImageQt(self._img)
+    self._qt_pix = QtGui.QPixmap.fromImage(self._qt_img)
+    self._window.label_matrix_preview.setPixmap(self._qt_pix)
 
   def _hide(self):
     self._window.hide()
