@@ -18,7 +18,7 @@ DISPLAY_RESOLUTION = Resolution(width=128, height=128)
 
 class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
-    QtWidgets.QApplication.__init__(self, sys.argv)
+    self._app = QtWidgets.QApplication.__init__(self, sys.argv)
     self._window = uic.loadUi(pathlib.Path(__file__).parents[0] / "desktopgui.ui")
     self._grab_bbox = None
     self._is_streaming = False
@@ -31,14 +31,17 @@ class DesktopApp(QtWidgets.QApplication):
     self._window.push_button_1_6.clicked.connect(lambda : self._launch_screengrab(width=768, height=768))
     self._window.push_button_1_7.clicked.connect(lambda : self._launch_screengrab(width=896, height=896))
     self._window.push_button_1_8.clicked.connect(lambda : self._launch_screengrab(width=1024, height=1024))
+    self._window.push_button_1_9.clicked.connect(lambda : self._launch_screengrab(width=1152, height=1152))
     self._window.push_button_arbitrary.clicked.connect(lambda : self._launch_screengrab(resizable=True))
 
-    self._window.push_button_image.clicked.connect(self._take_image)
-    self._window.push_button_stream.clicked.connect(self._toggle_stream)
+    self._window.button_take_image.clicked.connect(self._take_image)
+    self._window.button_live.clicked.connect(self._toggle_stream)
 
     self._update_enabledness()
 
     self._window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
+    self._window.setFixedSize(self._window.size())
+    #self._window.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize);
     self._window.show()
 
   def _launch_screengrab(self, width=128, height=128, resizable=False):
@@ -48,8 +51,9 @@ class DesktopApp(QtWidgets.QApplication):
     self._show()
 
   def _update_enabledness(self):
-    self._window.push_button_image.setEnabled(self._grab_bbox is not None)
-    self._window.push_button_stream.setEnabled(self._grab_bbox is not None)
+    self._window.button_take_image.setEnabled(self._grab_bbox is not None)
+    self._window.button_take_video.setEnabled(False)
+    self._window.button_live.setEnabled(self._grab_bbox is not None)
 
   def _toggle_stream(self):
     self._is_streaming = not self._is_streaming
