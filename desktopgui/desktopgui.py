@@ -21,6 +21,7 @@ class DesktopApp(QtWidgets.QApplication):
     QtWidgets.QApplication.__init__(self, sys.argv)
     self._window = uic.loadUi(pathlib.Path(__file__).parents[0] / "desktopgui.ui")
     self._grab_bbox = None
+    self._is_streaming = False
 
     self._window.push_button_1_1.clicked.connect(lambda : self._launch_screengrab(width=128, height=128))
     self._window.push_button_1_2.clicked.connect(lambda : self._launch_screengrab(width=256, height=256))
@@ -32,7 +33,8 @@ class DesktopApp(QtWidgets.QApplication):
     self._window.push_button_1_8.clicked.connect(lambda : self._launch_screengrab(width=1024, height=1024))
     self._window.push_button_arbitrary.clicked.connect(lambda : self._launch_screengrab(resizable=True))
 
-    self._window.push_button_image.clicked.connect(self._grab_image)
+    self._window.push_button_image.clicked.connect(self._take_image)
+    self._window.push_button_stream.clicked.connect(self._toggle_stream)
 
     self._update_enabledness()
 
@@ -47,10 +49,24 @@ class DesktopApp(QtWidgets.QApplication):
 
   def _update_enabledness(self):
     self._window.push_button_image.setEnabled(self._grab_bbox is not None)
+    self._window.push_button_stream.setEnabled(self._grab_bbox is not None)
+
+  def _toggle_stream(self):
+    self._is_streaming = not self._is_streaming
+    if self._is_streaming:
+        self._update_stream()
+
+  def _update_stream(self):
+    if self._is_streaming:
+      self._grab_image()
+      QtCore.QTimer.singleShot(1, self._update_stream)
+
+  def _take_image(self):
+    self._is_streaming = False
+    self._grab_image()
 
   def _grab_image(self):
     assert self._grab_bbox is not None
-    print(self._grab_bbox)
     self._img = ImageGrab.grab(bbox=self._grab_bbox)
     if self._img.width != DISPLAY_RESOLUTION.width or self._img.height != DISPLAY_RESOLUTION.height:
       self._img = self._img.resize((DISPLAY_RESOLUTION.width,DISPLAY_RESOLUTION.height), resample=Image.BILINEAR)
