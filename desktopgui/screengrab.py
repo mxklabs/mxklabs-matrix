@@ -2,6 +2,7 @@
 """
 import argparse
 from enum import Enum
+import os
 
 import pyautogui
 
@@ -9,6 +10,8 @@ import pygame
 from PIL import ImageEnhance
 
 BORDER_WIDTH = 1
+MAX_SIZE = (1920, 1080) if os.name == "nt" else (1280, 780)
+
 
 class MousePositionContext(Enum):
     """Specifies where the mouse is relative to the selection along 1 axis.
@@ -18,12 +21,13 @@ class MousePositionContext(Enum):
     INSIDE = 3
     POSITIVE_BORDER = 4
 
-def get_mouse_position_context(rect, can_use_border, resize_margin=5):
+def get_mouse_position_context(rect, can_use_border, scroll_rect, resize_margin=5):
     """Gives context about the position of the mouse relative to the selection
 
     Args:
         rect (pygame.Rect): The selection rect
         can_use_border (bool): whether or not the mouse can interact with borders.
+        scroll_rect (pygame.Rect): The rect describing the current scroll.
         resize_margin (int, optional): width either side of the border the mouse
           can use to resuze. Defaults to 5.
 
@@ -32,7 +36,8 @@ def get_mouse_position_context(rect, can_use_border, resize_margin=5):
     """
     x_ctx = MousePositionContext.OUTSIDE
     y_ctx = MousePositionContext.OUTSIDE
-    pos = pygame.mouse.get_pos()
+    mouse = pygame.mouse.get_pos()
+    pos = (mouse[0] + scroll_rect.left, mouse[1] + scroll_rect.top)
     if can_use_border:
         if rect.left - resize_margin <= pos[0] < rect.left + resize_margin:
             x_ctx = MousePositionContext.NEGATIVE_BORDER
@@ -75,7 +80,7 @@ def get_cursor_type(ctx):
         return pygame.SYSTEM_CURSOR_SIZENWSE
     return pygame.SYSTEM_CURSOR_SIZENESW
 
-def handle_event(event, ctx, selection_rect, drag_state):
+def handle_event(event, ctx, selection_rect, drag_state, scroll_rect, size):
     """Handles pygame events.
 
     Args:
@@ -83,11 +88,15 @@ def handle_event(event, ctx, selection_rect, drag_state):
         ctx (tuple of 2 MousePositionContext): context of mouse position
         selection_rect (pygame.Rect): the rect of the selection
         drag_state (dict): data referring to the state of the dragging.
+        scroll_rect (pygame.Rect): The rect of the visible window through scroll
+        size (tuple): the size of the image.
     """
     if event.type == pygame.MOUSEBUTTONDOWN:
-        if event.button == 1:
+        if event.button == 1 and not drag_state["is_dragging"]:
             drag_state["is_dragging"] = True
             drag_state["is_resizing"] = True
+            drag_state["is_scrolling"] = False
+            drag_state["is_abscrolling"] = False
             drag_state["is_resizing_x"] = ctx[0] != MousePositionContext.INSIDE
             drag_state["is_resizing_y"] = ctx[1] != MousePositionContext.INSIDE
             if ctx[0] == MousePositionContext.INSIDE and \
@@ -120,14 +129,32 @@ def handle_event(event, ctx, selection_rect, drag_state):
             else:
                 drag_state["is_dragging"] = False
                 drag_state["is_resizing"] = False
+        if event.button == 2 and not drag_state["is_dragging"]:
+            drag_state["is_dragging"] = True
+            drag_state["is_resizing"] = False
+            drag_state["is_scrolling"] = False
+            drag_state["is_abscrolling"] = True
+        if event.button == 3 and not drag_state["is_dragging"]:
+            drag_state["is_dragging"] = True
+            drag_state["is_resizing"] = False
+            drag_state["is_scrolling"] = True
+            drag_state["is_abscrolling"] = False
 
     if event.type == pygame.MOUSEBUTTONUP:
-        if event.button == 1:
+        if event.button == 1 or event.button == 2 or event.button == 3:
             drag_state["is_dragging"] = False
 
     if event.type == pygame.MOUSEMOTION:
         if drag_state["is_dragging"]:
-            if drag_state["is_resizing"]:
+            if drag_state["is_scrolling"]:
+                scroll_rect.centerx -= event.rel[0]
+                scroll_rect.centery -= event.rel[1]
+            elif drag_state["is_abscrolling"]:
+                scroll_rect.centerx -= event.rel[0]
+                scroll_rect.centery -= event.rel[1]
+                selection_rect.centerx -= event.rel[0]
+                selection_rect.centery -= event.rel[1]
+            elif drag_state["is_resizing"]:
                 before = getattr(selection_rect, drag_state["resize_anchor"])
                 if drag_state["is_resizing_x"]:
                     if "right" in drag_state["resize_anchor"]:
@@ -149,6 +176,22 @@ def handle_event(event, ctx, selection_rect, drag_state):
             else:
                 selection_rect.centerx += event.rel[0]
                 selection_rect.centery += event.rel[1]
+            if scroll_rect.left < 0:
+                    scroll_rect.left = 0
+            if scroll_rect.top < 0:
+                scroll_rect.top = 0
+            if scroll_rect.right > size[0]:
+                scroll_rect.right = size[0]
+            if scroll_rect.bottom > size[1]:
+                scroll_rect.bottom = size[1]
+            if selection_rect.left < 0:
+                selection_rect.left = 0
+            if selection_rect.top < 0:
+                selection_rect.top = 0
+            if selection_rect.right > size[0]:
+                selection_rect.right = size[0]
+            if selection_rect.bottom > size[1]:
+                selection_rect.bottom = size[1]
 
 # pylint: disable=no-member
 def main(width = 128, height = 128, is_resizable = False):
@@ -162,19 +205,25 @@ def main(width = 128, height = 128, is_resizable = False):
 
     image = pyautogui.screenshot()
     enhancer = ImageEnhance.Brightness(image)
+    image_size = image.size
 
-    img = pygame.image.fromstring(enhancer.enhance(0.5).tobytes(), image.size, image.mode)
-    bright = pygame.image.fromstring(image.tobytes(), image.size, image.mode)
+    img = pygame.image.fromstring(enhancer.enhance(0.5).tobytes(), image_size, image.mode)
+    bright = pygame.image.fromstring(image.tobytes(), image_size, image.mode)
 
-    game = pygame.display.set_mode(image.size)
-    selection_rect = pygame.Rect((image.size[0]-width)//2, (image.size[1]-height)//2, width, height)
+    size = (min(MAX_SIZE[0], image_size[0]), min(MAX_SIZE[1], image_size[1]))
+    scroll_rect = pygame.Rect((0, 0, size[0], size[1]))
 
-    drag_state = {"is_dragging":False, "is_resizing":False,
+    display = pygame.display.set_mode(size)
+    game = pygame.Surface(image_size)
+    selection_rect = pygame.Rect((size[0]-width)//2, (size[1]-height)//2, width, height)
+
+    drag_state = {"is_dragging":False, "is_resizing":False, "is_scrolling": False,
+                  "is_abscrolling": False,
                    "is_resizing_x":False, "is_resizing_y":False, "resize_anchor":None}
 
     running = True
     while running:
-        ctx = get_mouse_position_context(selection_rect, is_resizable)
+        ctx = get_mouse_position_context(selection_rect, is_resizable, scroll_rect)
 
         if not drag_state["is_dragging"]:
             pygame.mouse.set_cursor(get_cursor_type(ctx))
@@ -185,9 +234,15 @@ def main(width = 128, height = 128, is_resizable = False):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    raise RuntimeError("you pressed escape")
+                if event.key == pygame.K_RETURN:
                     running = False
+                if event.key == pygame.K_SPACE:
+                    running = False
+                
 
-            handle_event(event, ctx, selection_rect, drag_state)
+            handle_event(event, ctx, selection_rect, drag_state, scroll_rect, image_size)
 
         game.blit(img, (0,0))
         pygame.draw.rect(game, (255, 0, 0), (selection_rect.left -BORDER_WIDTH,
@@ -196,6 +251,7 @@ def main(width = 128, height = 128, is_resizable = False):
                                               selection_rect.height + 2 * BORDER_WIDTH)
                                                   , width=5)
         game.blit(bright, selection_rect.topleft, selection_rect)
+        display.blit(game, (0,0), area=scroll_rect)
         pygame.display.flip()
 
     pygame.quit()
