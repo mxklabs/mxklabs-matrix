@@ -1,5 +1,5 @@
 import sys
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtCore, QtWidgets, uic
 
 def launch_screen_grabber(width=None, height=None, resizable=None):
   print(f"button {width}, {height}, {resizable}")
@@ -18,6 +18,7 @@ def main(width=128, height=128):
   window.push_button_1_8.clicked.connect(lambda : launch_screen_grabber(width=1024, height=1024))
   window.push_button_arbitrary.clicked.connect(lambda : launch_screen_grabber(resizable=True))
 
+  window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
   window.show()
 
   app.exec()
