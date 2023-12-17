@@ -1,10 +1,23 @@
 import pyautogui 
 import pygame
 from PIL import Image, ImageEnhance
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-u", "--width", type=int, default=128,
+                    help="The initial width of the selection")
+
+parser.add_argument("-v", "--height", type=int, default=128,
+                    help="The initial height of the selection")
+
+parser.add_argument("-r", "--resizable", action="store_true",
+                    help="Can the selection be resized")
+
+args = parser.parse_args()
 
 # STUFF TO CHANGE
-SELECTION_SIZE = (128, 128) #Initial selection size. Change selection_rect.size after program starts.
-is_resizable = False # Can resize
+SELECTION_SIZE = (args.width, args.height) #Initial selection size. Change selection_rect.size after program starts.
+is_resizable = args.resizable # Can resize
 
 image = pyautogui.screenshot()
 
@@ -123,7 +136,6 @@ while running:
         
   
   game.blit(img, (0,0))
-  print(selection_pos)
   game.blit(bright, selection_rect.topleft, selection_rect)
   pygame.display.flip()
 pygame.quit()
