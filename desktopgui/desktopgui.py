@@ -27,16 +27,27 @@ class DesktopApp(QtWidgets.QApplication):
     self._window.push_button_1_8.clicked.connect(lambda : self._launch_screengrab(width=1024, height=1024))
     self._window.push_button_arbitrary.clicked.connect(lambda : self._launch_screengrab(resizable=True))
 
+    self._window.push_button_image.clicked.connect(self._grab_image)
+
+    self._update_enabledness()
+
     self._window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     self._window.show()
 
   def _launch_screengrab(self, width=128, height=128, resizable=False):
     self._hide()
     self._grab_bbox = screengrab(width=width, height=height, is_resizable=resizable)
-    print(self._grab_bbox)
+    self._update_enabledness()
+    self._show()
+
+  def _update_enabledness(self):
+    self._window.push_button_image.setEnabled(self._grab_bbox is not None)
+
+  def _grab_image(self):
+    assert self._grab_bbox is not None
+    #print(self._grab_bbox)
     img = ImageGrab.grab(bbox=self._grab_bbox)
     img.show()
-    self._show()
 
   def _hide(self):
     self._window.hide()
