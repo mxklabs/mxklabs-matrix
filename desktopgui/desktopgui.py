@@ -5,6 +5,8 @@ import pathlib
 import sys
 import time
 
+from PIL import ImageGrab
+
 from screengrab import main as screengrab
 
 from PyQt6 import QtCore, QtWidgets, uic
@@ -28,11 +30,12 @@ class DesktopApp(QtWidgets.QApplication):
     self._window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     self._window.show()
 
-
   def _launch_screengrab(self, width=128, height=128, resizable=False):
     self._hide()
     self._grab_bbox = screengrab(width=width, height=height, is_resizable=resizable)
     print(self._grab_bbox)
+    img = ImageGrab.grab(bbox=self._grab_bbox)
+    img.show()
     self._show()
 
   def _hide(self):
