@@ -5,11 +5,11 @@ import pathlib
 import sys
 import time
 
-from PIL import ImageGrab
+from PIL import ImageGrab, ImageQt
 
 from screengrab import main as screengrab
 
-from PyQt6 import QtCore, QtWidgets, uic
+from PyQt6 import QtCore, QtGui, QtWidgets, uic
 
 class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
@@ -45,9 +45,11 @@ class DesktopApp(QtWidgets.QApplication):
 
   def _grab_image(self):
     assert self._grab_bbox is not None
-    #print(self._grab_bbox)
+    print(self._grab_bbox)
     img = ImageGrab.grab(bbox=self._grab_bbox)
-    img.show()
+    qt_img = ImageQt.ImageQt(img)
+    qt_pix = QtGui.QPixmap.fromImage(qt_img)
+    self._window.label_matrix_preview.setPixmap(qt_pix)
 
   def _hide(self):
     self._window.hide()
