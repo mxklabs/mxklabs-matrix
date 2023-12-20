@@ -45,7 +45,7 @@ class DeviceGUI(QtWidgets.QApplication):
         self._window.label_mode.setText(f'Mode: {mode}')
 
     def set_preview(self, img : Image) -> None:
-        assert img.width != CONFIG['matrixWidth'] or img.height != CONFIG['matrixHeight'], \
+        assert img.width == CONFIG['matrixWidth'] and img.height == CONFIG['matrixHeight'], \
           f"Expected size {CONFIG['matrixWidth']}x{CONFIG['matrixHeight']} but got {img.width}x{img.height}"
 
         self._qt_img = utils.pil_to_qimage(img)
