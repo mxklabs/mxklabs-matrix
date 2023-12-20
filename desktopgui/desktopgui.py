@@ -12,13 +12,20 @@ from screengrab import main as screengrab
 
 from PySide6 import QtCore, QtGui, QtWidgets, QtUiTools
 
+import rest
+import deviceapi
+
 Resolution = collections.namedtuple("Resolution", ["width", "height"])
 
 DISPLAY_RESOLUTION = Resolution(width=128, height=128)
 
+class Device(deviceapi.DeviceAPI, rest.ClientAPI):
+  pass
+
 class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
     self._app = QtWidgets.QApplication.__init__(self, sys.argv)
+    self._device = Device()
     ui_file = QtCore.QFile(pathlib.Path(__file__).parents[0] / "desktopgui.ui")
     if not ui_file.open(QtCore.QIODevice.ReadOnly):
         print("Cannot open 'desktopgui.ui'")
