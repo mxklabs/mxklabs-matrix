@@ -4,9 +4,6 @@
 import rest
 import deviceapi
 
-class Device(deviceapi.DeviceAPI, rest.ServerAPI):
-  pass
-
 if __name__ == "__main__":
-  device = Device()
-  device.run()
+  device = rest.server_api(deviceapi.DeviceAPI())
+  device.app.run()

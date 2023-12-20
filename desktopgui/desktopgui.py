@@ -4,7 +4,6 @@
 import collections
 import pathlib
 import sys
-import time
 
 from PIL import ImageGrab, ImageQt, Image
 
@@ -19,13 +18,11 @@ Resolution = collections.namedtuple("Resolution", ["width", "height"])
 
 DISPLAY_RESOLUTION = Resolution(width=128, height=128)
 
-class Device(deviceapi.DeviceAPI, rest.ClientAPI):
-  pass
 
 class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
     self._app = QtWidgets.QApplication.__init__(self, sys.argv)
-    self._device = Device()
+    self._device = rest.client_api(deviceapi.DeviceAPI())
     ui_file = QtCore.QFile(pathlib.Path(__file__).parents[0] / "desktopgui.ui")
     if not ui_file.open(QtCore.QIODevice.ReadOnly):
         print("Cannot open 'desktopgui.ui'")

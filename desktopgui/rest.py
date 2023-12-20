@@ -19,52 +19,49 @@ def deserialize(x, argtype):
 
 SERVER_STRING = "http://127.0.0.1:5000"
 
-class ClientAPI:
-    def __new__(self):
-        for i in dir(self):
-            if i.startswith("__"):
-                continue
-            f = getattr(self, i)
-            if not hasattr(f, "is_endpoint"):
-                continue
-            sig = getfullargspec(f)
-            def newfunc(*args, **kwargs):
-                print(args, kwargs)
-                data = {}
+def client_api(api):
+    for i in dir(api):
+        if i.startswith("__"):
+            continue
+        f = getattr(api, i)
+        if not hasattr(f, "is_endpoint"):
+            continue
+        sig = getfullargspec(f)
+        def newfunc(*args, **kwargs):
+            print(args, kwargs)
+            data = {}
 
-                for i,arg in enumerate(args):
-                    name = sig.args[i+1]
-                    argtype = sig.annotations[name]
-                    data[name] = serialize(arg, argtype)
+            for i,arg in enumerate(args):
+                name = sig.args[i+1]
+                argtype = sig.annotations[name]
+                data[name] = serialize(arg, argtype)
 
-                for k,v in kwargs:
-                    argtype = sig.annotations[k]
-                    data[k] = serialize(v, argtype)
-                requests.post(SERVER_STRING + f.path, json=data)
-            setattr(self, i, newfunc)
-        return self
+            for k,v in kwargs:
+                argtype = sig.annotations[k]
+                data[k] = serialize(v, argtype)
+            requests.post(SERVER_STRING + f.path, json=data)
+        setattr(api, i, newfunc)
+    return api
 
-class ServerAPI:
-    def __init__(self):
-        self.app = Flask(__name__)
-        for i in dir(self):
-            if i.startswith("__"):
-                continue
-            f = getattr(self, i)
-            if not hasattr(f, "is_endpoint"):
-                continue
-            sig = getfullargspec(f)
-            @self.app.route(f.path, methods=['GET', 'POST'])
-            def wrappingfunc():
-                data = request.json
-                kwargs = {}
-                for k,v in data.items():
-                    argtype = sig.annotations[k]
-                    kwargs[k] = deserialize(v, argtype)
-                return f(**kwargs)
-
-    def run(self):
-        self.app.run()
+def server_api(api):
+    api.app = Flask(__name__)
+    for i in dir(api):
+        if i.startswith("__"):
+            continue
+        f = getattr(api, i)
+        if not hasattr(f, "is_endpoint"):
+            continue
+        sig = getfullargspec(f)
+        def wrappingfunc(f=f, sig=sig):
+            data = request.json
+            kwargs = {}
+            for k,v in data.items():
+                argtype = sig.annotations[k]
+                kwargs[k] = deserialize(v, argtype)
+            return f(**kwargs)
+        wrappingfunc.__name__ = f.__name__
+        api.app.route(f.path, methods=['GET', 'POST'])(wrappingfunc)
+    return api
 
 def endpoint(path):
     def wrapper(func):
