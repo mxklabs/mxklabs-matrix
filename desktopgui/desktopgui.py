@@ -10,7 +10,7 @@ from PIL import ImageGrab, ImageQt, Image
 
 from screengrab import main as screengrab
 
-from PyQt6 import QtCore, QtGui, QtWidgets, uic
+from PySide6 import QtCore, QtGui, QtWidgets, QtUiTools
 
 Resolution = collections.namedtuple("Resolution", ["width", "height"])
 
@@ -19,7 +19,12 @@ DISPLAY_RESOLUTION = Resolution(width=128, height=128)
 class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
     self._app = QtWidgets.QApplication.__init__(self, sys.argv)
-    self._window = uic.loadUi(pathlib.Path(__file__).parents[0] / "desktopgui.ui")
+    ui_file = QtCore.QFile(pathlib.Path(__file__).parents[0] / "desktopgui.ui")
+    if not ui_file.open(QtCore.QIODevice.ReadOnly):
+        print("Cannot open 'desktopgui.ui'")
+        sys.exit(-1)
+    loader = QtUiTools.QUiLoader()
+    self._window = loader.load(ui_file)
     self._grab_bbox = None
     self._is_streaming = False
 
