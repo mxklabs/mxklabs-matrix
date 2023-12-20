@@ -18,6 +18,14 @@ Resolution = collections.namedtuple("Resolution", ["width", "height"])
 
 DISPLAY_RESOLUTION = Resolution(width=128, height=128)
 
+def PIL_to_qimage(pil_img):
+    temp = pil_img.convert('RGBA')
+    return QtGui.QImage(
+        temp.tobytes('raw', "RGBA"),
+        temp.size[0],
+        temp.size[1],
+        QtGui.QImage.Format.Format_RGBA8888
+    )
 
 class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
@@ -83,8 +91,8 @@ class DesktopApp(QtWidgets.QApplication):
     self._img = ImageGrab.grab(bbox=self._grab_bbox)
     if self._img.width != DISPLAY_RESOLUTION.width or self._img.height != DISPLAY_RESOLUTION.height:
       self._img = self._img.resize((DISPLAY_RESOLUTION.width,DISPLAY_RESOLUTION.height), resample=Image.BILINEAR)
-    self._qt_img = ImageQt.ImageQt(self._img)
-    self._qt_pix = QtGui.QPixmap.fromImage(self._qt_img)
+    self._qt_img = PIL_to_qimage(self._img)
+    self._qt_pix = QtGui.QPixmap.fromImage(self._qt_img, QtCore.Qt.ImageConversionFlag.AutoColor)
     self._window.label_matrix_preview.setPixmap(self._qt_pix)
 
   def _hide(self):
