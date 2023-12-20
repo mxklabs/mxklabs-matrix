@@ -3,3 +3,4 @@ pyautogui
 Pillow
 PySide6
 PyQt6-tools
+flask
