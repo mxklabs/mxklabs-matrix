@@ -3,7 +3,17 @@
 
 import rest
 import deviceapi
+import devicegui
+import threading
 
 if __name__ == "__main__":
-  device = rest.server_api(deviceapi.DeviceAPI())
-  device.app.run()
+
+  server = rest.server_api(deviceapi.DeviceAPI())
+
+  gui = devicegui.DeviceGUI()
+  server_thread = threading.Thread(target=server.app.run)
+  server_thread.start()
+
+  gui.exec()
+
+  server_thread.join()

@@ -14,7 +14,7 @@ import utils
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
 
-class DeviceApp(QtWidgets.QApplication):
+class DeviceGUI(QtWidgets.QApplication):
     def __init__(self):
         self._app = QtWidgets.QApplication.__init__(self, sys.argv)
         ui_file = QtCore.QFile(pathlib.Path(__file__).parents[0] / "devicegui.ui")
@@ -61,10 +61,10 @@ class DeviceApp(QtWidgets.QApplication):
     def exec(self):
         QtWidgets.QApplication.exec()
 
-def main():
-    app = DeviceApp()
-    app.exec()
+# def main():
+#     app = DeviceGUI()
+#     app.exec()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
