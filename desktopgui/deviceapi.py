@@ -13,18 +13,20 @@ class DeviceAPI:
   def __init__(self):
     pass
 
-  @rest.endpoint('/set_slot')
+  @rest.endpoint(rest.RequestType.POST, '/slot')
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
-    pass
+    print(gif_data)
+    print(f"SETTING TO SLOT {gif_data}")
+    return True
 
-  @rest.endpoint('/get_slot')
+  @rest.endpoint(rest.RequestType.GET, '/slot')
   def get_slot(self, slot_index : int) -> bytes | None:
-    pass
+    return 246467
 
-  @rest.endpoint('/set_mode')
+  @rest.endpoint(rest.RequestType.POST, '/mode')
   def set_mode(self, mode : Mode, slot : int | None) -> bool:
     pass
 
-  @rest.endpoint('/set_live')
+  @rest.endpoint(rest.RequestType.POST, '/live')
   def set_live(self, gif_data : bytes) -> bool:
     pass

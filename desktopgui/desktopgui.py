@@ -4,6 +4,7 @@
 import collections
 import pathlib
 import sys
+import io
 
 from PIL import ImageGrab, ImageQt, Image
 
@@ -85,6 +86,10 @@ class DesktopApp(QtWidgets.QApplication):
   def _take_image(self):
     self._is_streaming = False
     self._grab_image()
+    arr = io.BytesIO()
+    self._img.save(arr, format="gif")
+    self._device.set_slot(0, arr.getvalue())
+
 
   def _grab_image(self):
     assert self._grab_bbox is not None
