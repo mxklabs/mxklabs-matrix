@@ -1,6 +1,8 @@
 from inspect import getfullargspec
 import pickle
 import base64
+import json
+import pathlib
 from enum import Enum
 
 from flask import Flask, request
@@ -16,7 +18,10 @@ def serialize(x):
 def deserialize(x):
     return pickle.loads(base64.b64decode(x.encode("utf-8") if type(x) == str else x))
 
-SERVER_STRING = "http://127.0.0.1:5000"
+with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
+    CONFIG = json.load(f)
+
+SERVER_STRING = f"http://{CONFIG['connectToIP4Addr']}:{CONFIG['port']}"
 
 def client_api(api):
     for i in dir(api):
