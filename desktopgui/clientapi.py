@@ -1,10 +1,15 @@
+from enum import IntEnum
+
 import pathlib
 import json
 
 import requests
 
-from deviceapi import Mode
-
+class Mode(IntEnum):
+    OFF         = 0
+    ROUND_ROBIN = 1
+    SHOW_SLOT   = 2
+    LIVE        = 3
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)

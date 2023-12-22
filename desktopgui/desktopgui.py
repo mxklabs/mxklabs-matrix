@@ -31,6 +31,7 @@ class DesktopApp(QtWidgets.QApplication):
   def __init__(self):
     self._app = QtWidgets.QApplication.__init__(self, sys.argv)
     self._window = uic.loadUi(pathlib.Path(__file__).parents[0] / "desktopgui.ui")
+    self._device = clientapi.ClientAPI()
     self._grab_bbox = None
     self._is_streaming = False
 
