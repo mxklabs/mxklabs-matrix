@@ -3,5 +3,6 @@
   "matrixHeight" : 128,
   "listenIP4Addr" : "0.0.0.0",
   "connectToIP4Addr": "192.168.0.36",
-  "port" : 5000
+  "port" : 5000,
+  "api_timeout": 3
 }
