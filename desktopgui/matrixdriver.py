@@ -40,14 +40,11 @@ class MatrixDriver:
         self._matrix = RGBMatrix(options = options)
 
     def set_image(self, img : Image) -> None:
-        print("SETTING IMAGE", flush = True)
-        print("IMAGE", img, flush = True)
         assert img.mode == "RGB", \
           f"Expected mode 'RGB' but got {img.mode}"
 
         assert img.width == CONFIG['matrixWidth'] and img.height == CONFIG['matrixHeight'], \
           f"Expected size {CONFIG['matrixWidth']}x{CONFIG['matrixHeight']} but got {img.width}x{img.height}"
-        self._matrix.SetPixel(2, 2, 0, 255, 0)
         self._matrix.SetImage(img)
 
     # def run(self):

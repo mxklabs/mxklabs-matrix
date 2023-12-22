@@ -3,7 +3,6 @@ from enum import IntEnum
 from PIL import Image
 
 import io
-import matrixdriver
 import sys
 
 class Mode(IntEnum):
@@ -13,9 +12,9 @@ class Mode(IntEnum):
     LIVE        = 3
 
 class DeviceAPI:
-  def __init__(self, matrix_driver : matrixdriver.MatrixDriver):
+  def __init__(self, matrix_driver):
     #self._device_gui = device_gui
-    self._matrix_driver = matrix_driver
+    self.matrix_driver = matrix_driver
 
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
     if gif_data is None:
@@ -29,7 +28,7 @@ class DeviceAPI:
             im.seek(0)  # skip to the second frame
 
             # self._device_gui.set_preview(im)
-            self._matrix_driver.set_image(im.convert('RGB'))
+            self.matrix_driver.set_image(im.convert('RGB'))
     return True
 
   def get_slot(self, slot_index : int) -> bytes | None:
