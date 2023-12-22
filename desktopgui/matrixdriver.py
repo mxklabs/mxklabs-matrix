@@ -21,26 +21,33 @@ class MatrixDriver:
         options.row_address_type    = 0
         options.multiplexing        = 0
         # TODO: Change back to higher number for better image.
-        options.pwm_bits            = 3 #11
-        options.brightness          = 100
-        options.pwm_lsb_nanoseconds = 130
+        options.pwm_bits            = 11 #11
+        #options.pwm_dither_bits     = 1 # not defined initially.
+        options.brightness          = 50 # 100
+        options.pwm_lsb_nanoseconds = 130 # 130
         options.led_rgb_sequence    = "RGB"
 
         # This is a custom pixel mapper for our set-up, see https://github.com/mxklabs/rpi-rgb-led-matrix/tree/MorkPixelMapper
         options.pixel_mapper_config = "Mork" 
         options.panel_type          = ""
         options.show_refresh_rate   = 1
-        options.gpio_slowdown       = 2
+        options.gpio_slowdown       = 1
+
+        # Testing
+        #options.disable_hardware_pulsing = False
+        options.limit_refresh_rate_hz = 60
 
         self._matrix = RGBMatrix(options = options)
 
-    def set_image(self, img : Image) -> None
-        assert img.mode == "RGB",
+    def set_image(self, img : Image) -> None:
+        print("SETTING IMAGE", flush = True)
+        print("IMAGE", img, flush = True)
+        assert img.mode == "RGB", \
           f"Expected mode 'RGB' but got {img.mode}"
 
         assert img.width == CONFIG['matrixWidth'] and img.height == CONFIG['matrixHeight'], \
           f"Expected size {CONFIG['matrixWidth']}x{CONFIG['matrixHeight']} but got {img.width}x{img.height}"
-
+        self._matrix.SetPixel(2, 2, 0, 255, 0)
         self._matrix.SetImage(img)
 
     # def run(self):
