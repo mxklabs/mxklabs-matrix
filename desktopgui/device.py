@@ -2,20 +2,21 @@
 """
 import json
 import pathlib
+import sys
 import threading
 
 import deviceapi
-import devicegui
+# import devicegui
+import matrixdriver
 import server
-import sys
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
 
 if __name__ == "__main__":
-
-  gui = devicegui.DeviceGUI()
-  device_api = deviceapi.DeviceAPI(gui)
+  #gui = devicegui.DeviceGUI()
+  matrix_driver = matrixdriver.MatrixDriver()
+  device_api = deviceapi.DeviceAPI(matrix_driver)
   matrix_server = server.matrix_server(device_api)
   server_thread = threading.Thread(target=matrix_server, kwargs={
      "host": CONFIG['listenIP4Addr'],
@@ -24,6 +25,6 @@ if __name__ == "__main__":
   })
   server_thread.start()
 
-  gui.exec()
+  #gui.exec()
 
-  server_thread.join()
+  #server_thread.join()

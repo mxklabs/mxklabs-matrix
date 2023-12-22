@@ -2,8 +2,10 @@ from enum import IntEnum
 
 from PIL import Image
 
-import devicegui
+# import devicegui
 import io
+import matrixdriver
+import sys
 
 class Mode(IntEnum):
     OFF         = 0
@@ -12,11 +14,11 @@ class Mode(IntEnum):
     LIVE        = 3
 
 class DeviceAPI:
-  def __init__(self, device_gui: devicegui.DeviceGUI):
-    self._device_gui = device_gui
+  def __init__(self, matrix_driver : matrixdriver.MatrixDriver):
+    #self._device_gui = device_gui
+    self._matrix_driver = matrix_driver
 
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
-
     if gif_data is None:
         raise RuntimeError(f"TODO: Deal with None data in set_slow")
     else:
@@ -27,7 +29,8 @@ class DeviceAPI:
 
             im.seek(0)  # skip to the second frame
 
-            self._device_gui.set_preview(im)
+            # self._device_gui.set_preview(im)
+            self._matrix_driver.set_image(im.convert('RGB'))
     return True
 
   def get_slot(self, slot_index : int) -> bytes | None:
