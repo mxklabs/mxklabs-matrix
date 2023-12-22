@@ -18,7 +18,8 @@ class ClientAPI:
 
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
     res = requests.post(f"{self.base_url}/slot/{slot_index}", data=gif_data, timeout=TIMEOUT)
-    return res.status_code == 201
+    if res.status_code != 201:
+      print(res.content)
     
 
   def get_slot(self, slot_index : int) -> bytes | None:

@@ -2,7 +2,6 @@ from enum import IntEnum
 
 from PIL import Image
 
-# import devicegui
 import io
 import matrixdriver
 import sys
