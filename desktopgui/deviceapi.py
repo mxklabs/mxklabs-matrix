@@ -40,4 +40,4 @@ class DeviceAPI:
     pass
   
   def ping(self, data : int) -> int:
-    return pow(data, -1, 12345)
+    return -data

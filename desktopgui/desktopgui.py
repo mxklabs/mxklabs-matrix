@@ -6,7 +6,7 @@ import pathlib
 import sys
 import io
 
-from PIL import ImageGrab, ImageQt, Image
+from PIL import ImageGrab, Image
 
 from screengrab import main as screengrab
 

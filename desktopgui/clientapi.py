@@ -36,5 +36,6 @@ class ClientAPI:
   def set_live(self, gif_data : bytes) -> bool:
     pass
   
-  def ping(self, data : int) -> int:
-    return pow(data, -1, 12345)
+  def ping(self, ping_id : int) -> int:
+    res = requests.get(f"{self.base_url}/ping/{ping_id}", json={"ping_id": int(ping_id)}, timeout=TIMEOUT)
+    return res.json()["check_int"]

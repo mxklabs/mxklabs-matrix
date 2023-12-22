@@ -19,4 +19,16 @@ def matrix_server(api):
         else:
             return "", 500
         
+    @app.route("/ping/<ping_id>", methods=["GET"])
+    def ping(ping_id):
+        try:
+            ping_id_int = int(ping_id)
+        except TypeError:
+            return f"{ping_id} provided couldn't be cast to int.", 400
+        try:
+            res = api.ping(ping_id_int)
+        except Exception as e:
+            return str(e), 500
+        return {"check_int":res}
+        
     return app.run
