@@ -1,6 +1,7 @@
 pygame
 pyautogui
 Pillow
-PySide6
 flask
 requests
+PyQt6
+PyQt6-tools
