@@ -20,6 +20,7 @@ TIMEOUT = CONFIG['api_timeout']
 class ClientAPI:
   def __init__(self, base_url=SERVER_STRING):
     self.base_url = base_url
+    self.matrix_driver = None
 
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
     res = requests.post(f"{self.base_url}/slot/{slot_index}", data=gif_data, timeout=TIMEOUT)
