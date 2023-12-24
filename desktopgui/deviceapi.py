@@ -4,31 +4,20 @@ from PIL import Image
 
 import io
 import sys
+import threading
 
-class Mode(IntEnum):
-    OFF         = 0
-    ROUND_ROBIN = 1
-    SHOW_SLOT   = 2
-    LIVE        = 3
-
+from clientapi import Mode
+from displaymanager import DisplayManager
 class DeviceAPI:
   def __init__(self, matrix_driver):
     #self._device_gui = device_gui
     self.matrix_driver = matrix_driver
+    self.display_manager = DisplayManager(matrix_driver)
+    self.display_manager_thread = threading.Thread(target=self.display_manager.run)
+    self.display_manager_thread.start()
 
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
-    if gif_data is None:
-        raise RuntimeError(f"TODO: Deal with None data in set_slow")
-    else:
-        fp = io.BytesIO(gif_data)
-        with Image.open(fp) as im:
-            if im.n_frames < 1 or im.n_frames > 1:
-              raise RuntimeError(f"TODO: Deal with .gif that has {im.n_frames} frames")
-
-            im.seek(0)  # skip to the second frame
-
-            # self._device_gui.set_preview(im)
-            self.matrix_driver.set_image(im.convert('RGB'))
+    self.display_manager.set_slot(slot_index, gif_data)
     return True
 
   def get_slot(self, slot_index : int) -> bytes | None:

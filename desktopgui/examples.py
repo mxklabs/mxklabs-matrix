@@ -13,6 +13,13 @@ def square():
 
     matrix.send_to_matrix()
 
+def rick():
+    matrix.img = matrix.ImageSequence.all_frames(matrix.Image.open("desktopgui/rick-roll-rick-ashley.gif"), lambda x:x.resize((128, 128)))
+    print("ENCODED!")
+    #print(type(matrix.img))
+    #matrix.img = matrix.Image.open("desktopgui/e.png")
+    matrix.send_to_matrix()
+
 def moving_square():
     x_move = 0
     y_move = 0
@@ -28,4 +35,4 @@ def moving_square():
         matrix.send_to_matrix()
         time.sleep(1)
 
-matrix.run(moving_square)
+matrix.run(rick, "e")

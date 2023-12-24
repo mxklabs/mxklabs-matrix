@@ -82,7 +82,7 @@ class DesktopApp(QtWidgets.QApplication):
     self._grab_image()
     arr = io.BytesIO()
     self._img.save(arr, format="gif")
-    self._device.set_slot(0, arr.getvalue())
+    self._device.set_slot(0, bytes([1]) + arr.getvalue())
 
 
   def _grab_image(self):

@@ -1,7 +1,8 @@
-import pathlib
-import json
-import random
 import io
+import json
+import pathlib
+import random
+import sys
 import threading
 
 import clientapi
@@ -29,6 +30,16 @@ class PygameDriver:
         image_dimensions = image.size
         pygame_surface = scale2x(pygame.image.fromstring(image_data, image_dimensions, "RGB"))
         self.game.blit(pygame_surface, (0,0))
+    
+    def get_canvas(self, image):
+        image_data = image.convert("RGB").tobytes()
+        image_dimensions = image.size
+        return scale2x(pygame.image.fromstring(image_data, image_dimensions, "RGB"))
+
+    def display_canvas(self, canvas):
+        self.game.blit(canvas, (0,0))
+    
+
 
 def reset():
     global img
@@ -43,11 +54,11 @@ def run(f, *args, **kwargs):
     if is_pygame:
         done = False
         while not done:
+            pygame.display.flip()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     done = True
-            pygame.display.flip()
     func_thread.join()
 
 def connect(hostname = CONFIG["connectToIP4Addr"], port = CONFIG["port"]):
@@ -70,9 +81,11 @@ def set_pixel(x, y, color):
 
 def send_to_matrix():
     arr = io.BytesIO()
+    identifier = 1
     if isinstance(img, list):
+        identifier = 2
         img[0].save(arr, format="gif", append_images=img[1:], save_all=True, optimize=False, loop=0)
     else:
         img.save(arr, format="gif")
     
-    api.set_slot(0, arr.getvalue())
+    api.set_slot(0, bytes([identifier]) + arr.getvalue())
