@@ -3,7 +3,6 @@ import json
 import pathlib
 
 from PIL import Image
-
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
@@ -23,7 +22,7 @@ class MatrixDriver:
         # TODO: Change back to higher number for better image.
         options.pwm_bits            = 11 #11
         #options.pwm_dither_bits     = 1 # not defined initially.
-        options.brightness          = 50 # 100
+        options.brightness          = 75 # 100
         options.pwm_lsb_nanoseconds = 130 # 130
         options.led_rgb_sequence    = "RGB"
 
@@ -31,7 +30,8 @@ class MatrixDriver:
         options.pixel_mapper_config = "Mork" 
         options.panel_type          = ""
         options.show_refresh_rate   = 1
-        options.gpio_slowdown       = 1
+        options.gpio_slowdown       = 2
+        options.cpu_affinity        = CONFIG["driverThreadCpuAffinity"]
 
         # Testing
         #options.disable_hardware_pulsing = False

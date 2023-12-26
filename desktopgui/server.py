@@ -1,7 +1,7 @@
 from flask import Flask, request
 
 def matrix_server(api):
-    app = Flask(__name__)
+    app = Flask('server')
 
     @app.route("/slot/<slot_index>", methods=["POST"])
     def set_slot(slot_index):
@@ -10,9 +10,12 @@ def matrix_server(api):
         except TypeError:
             return f"{slot_index} provided couldn't be cast to int.", 400
         gif_data = request.get_data()
+        print(gif_data, flush=True)
         try:
             res = api.set_slot(slot, gif_data)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return str(e), 500
         if res:
             return "", 201
