@@ -4,7 +4,10 @@
   "listenIP4Addr" : "0.0.0.0",
   "connectToIP4Addr": "192.168.0.37",
   "port" : 5000,
+  "screenPreviewUpdateMillis": 10,
   "api_timeout": 3,
   "driverThreadCpuAffinity": 2,
-  "flaskThreadCpuAffinity": 3
+  "flaskThreadCpuAffinity": 3,
+  "numSlots": 20,
+  "minimumSlotTime" : 20
 }
