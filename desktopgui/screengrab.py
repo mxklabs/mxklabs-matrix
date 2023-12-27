@@ -118,9 +118,9 @@ def handle_event(event, ctx, selection_rect, drag_state, scroll_rect, size):
                 drag_state["is_resizing"] = False
             else:
                 drag_state["resize_anchor"] = [
-                    ["bottomright", "bottom", "bottomleft"],
-                    ["right"      , None    , "left"      ],
-                    ["topright"   , "top"   , "topleft"   ]
+                    ["bottomright", "midbottom", "bottomleft"],
+                    ["midright"   , None       , "midleft"   ],
+                    ["topright"   , "midtop"   , "topleft"   ]
                 ][ctx[1]][ctx[0]]
         if event.button == 2 and not drag_state["is_dragging"]:
             drag_state["is_dragging"] = True
@@ -152,7 +152,7 @@ def handle_event(event, ctx, selection_rect, drag_state, scroll_rect, size):
                     if selection_rect.width < 128:
                         selection_rect.width = 128
                         drag_state["is_dragging"] = False
-                if drag_state["is_resizing_y"]:
+                else:
                     if "bottom" in drag_state["resize_anchor"]:
                         selection_rect.height -= event.rel[1]
                     else:
@@ -160,6 +160,10 @@ def handle_event(event, ctx, selection_rect, drag_state, scroll_rect, size):
                     if selection_rect.height < 128:
                         selection_rect.height = 128
                         drag_state["is_dragging"] = False
+                if drag_state["fixed_ratio"]:
+                    newsize = selection_rect.width if drag_state["is_resizing_x"] else selection_rect.height
+                    selection_rect.width = newsize
+                    selection_rect.height = newsize
                 setattr(selection_rect, drag_state["resize_anchor"], before)
             if not (drag_state["is_scrolling"] or drag_state["is_resizing"]):
                 selection_rect.centerx += event.rel[0] * (-1 if drag_state["is_abscrolling"] else 1)
@@ -168,7 +172,7 @@ def handle_event(event, ctx, selection_rect, drag_state, scroll_rect, size):
             boundrect(selection_rect, size)
 
 # pylint: disable=no-member
-def main(width = 128, height = 128, is_resizable = False):
+def main(width = 128, height = 128, is_resizable = False, fixed_ratio=True):
     """Entry function
 
     Args:
@@ -192,7 +196,7 @@ def main(width = 128, height = 128, is_resizable = False):
     selection_rect = pygame.Rect((size[0]-width)//2, (size[1]-height)//2, width, height)
 
     drag_state = {"is_dragging":False, "is_resizing":False, "is_scrolling": False,
-                  "is_abscrolling": False,
+                  "is_abscrolling": False, "fixed_ratio": fixed_ratio,
                    "is_resizing_x":False, "is_resizing_y":False, "resize_anchor":None}
 
     running = True

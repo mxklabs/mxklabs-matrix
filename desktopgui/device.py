@@ -38,6 +38,7 @@ if __name__ == "__main__":
     os.sched_setaffinity(server_thread.native_id, new_affinity)
 
 
+
   #gui.exec()
 
-  #server_thread.join()
+  server_thread.join()

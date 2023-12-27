@@ -7,7 +7,7 @@ import threading
 import clientapi
 import deviceapi
 
-from PIL import Image
+from PIL import Image, ImageSequence
 import pygame
 import requests
 
@@ -70,5 +70,9 @@ def set_pixel(x, y, color):
 
 def send_to_matrix():
     arr = io.BytesIO()
-    img.save(arr, format="gif")
+    if isinstance(img, list):
+        img[0].save(arr, format="gif", append_images=img[1:], save_all=True, optimize=False, loop=0)
+    else:
+        img.save(arr, format="gif")
+    
     api.set_slot(0, arr.getvalue())

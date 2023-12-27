@@ -45,6 +45,14 @@ class MatrixDriver:
         assert img.width == CONFIG['matrixWidth'] and img.height == CONFIG['matrixHeight'], \
           f"Expected size {CONFIG['matrixWidth']}x{CONFIG['matrixHeight']} but got {img.width}x{img.height}"
         self._matrix.SetImage(img)
+    
+    def get_canvas(self, image: Image):
+        canvas = self._matrix.CreateFrameCanvas()
+        canvas.SetImage(image.convert("RGB"))
+        return canvas
+
+    def display_canvas(self, canvas):
+        self._matrix.SwapOnVSync(canvas, framerate_fraction=1)
 
     # def run(self):
 
