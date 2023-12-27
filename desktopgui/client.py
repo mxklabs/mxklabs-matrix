@@ -96,7 +96,6 @@ class ClientApp(QtWidgets.QMainWindow):
     for slot in range(CONFIG['numSlots']):
       self._slot_widgets.append(SlotWidget())
       self._slot_widgets[-1].label.setText(f"Slot {slot}:")
-      print(f'slot {slot}, {type(slot)}')
       self._slot_widgets[-1].button_get_img.clicked.connect(lambda _,slot=slot: self._process_slot_get_img_click(slot))
       self._slot_widgets[-1].button_get_vid.clicked.connect(lambda _,slot=slot: self._process_slot_get_vid_click(slot))
       self._window.scroll_area_slots_contents.layout().addWidget(self._slot_widgets[-1])
