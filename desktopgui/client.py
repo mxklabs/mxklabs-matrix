@@ -12,6 +12,7 @@ import time
 from PIL import Image, ImageChops, ImageFilter, ImageGrab
 
 from screengrab import main as screengrab
+import gifgrabber
 
 from PyQt6 import QtCore, QtGui, QtWidgets, uic
 
@@ -39,6 +40,7 @@ class SlotWidget(QtWidgets.QWidget):
 
 class ClientApp(QtWidgets.QMainWindow):
   _screen_preview_thread_fired = QtCore.pyqtSignal(name="previewThreadFired")
+  _gif_grabber_done = QtCore.pyqtSignal(int, name="videoGrabberDone")
 
   def __init__(self, client_handler):
     QtWidgets.QMainWindow.__init__(self, parent=None)
@@ -52,6 +54,9 @@ class ClientApp(QtWidgets.QMainWindow):
 
     self._screen_preview_timer = QtCore.QTimer(self)
     self._screen_preview_timer.timeout.connect(self._update_screen_preview)
+
+    self._gif_grabber = None
+    self._gif_grabber_done.connect(self._process_gif_grabber_done)
 
     self._window.combo_resample_method.addItem("Nearest", Image.NEAREST)
     self._window.combo_resample_method.addItem("Bilinear", Image.BILINEAR)
@@ -76,8 +81,8 @@ class ClientApp(QtWidgets.QMainWindow):
     # self._window.button_live.clicked.connect(self._toggle_stream)
 
     # slot_layout = QtWidgets.QVBoxLayout()
-    # .setLayout(slot_layout)#
 
+    # .setLayout(slot_layout)#
 
     self._window.label_screen_preview.setMinimumSize(MATRIX_WIDTH, MATRIX_HEIGHT)
     self._window.label_screen_preview.setMaximumSize(MATRIX_WIDTH, MATRIX_HEIGHT)
@@ -139,12 +144,17 @@ class ClientApp(QtWidgets.QMainWindow):
 
   def _process_slot_get_img_click(self, slot):
     assert self._preview_img is not None
-    print(f"Getting slot {slot} image.")
-
     self._client_handler.process_set_slot(slot, self._preview_img)
 
   def _process_slot_get_vid_click(self, slot):
+    self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
     print(f"Getting slot {slot} video.")
+
+  def _process_gif_grabber_done(self, slot):
+    imgs = self._gif_grabber.imgs()
+    durs = self._gif_grabber.durations()  
+    self._client_handler.process_set_slot_vid(slot, imgs, durs)
+    self._gif_grabber = None
 
   def _update_screen_preview(self):
     # Take an image.
@@ -159,6 +169,8 @@ class ClientApp(QtWidgets.QMainWindow):
 
     # Call handler.
     self._client_handler.process_screen_image(self._preview_img)
+    if self._gif_grabber is not None:
+      self._gif_grabber.feed_img(self._preview_img)
 
     # Update preview widget.
     self._qt_img = PIL_to_qimage(self._preview_img)

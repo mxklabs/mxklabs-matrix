@@ -45,9 +45,13 @@ class ClientLogic:
         """ Set a slot for an image. """
         buffer = io.BytesIO()
         img.save(buffer, format="gif")
-
         self._client_api.set_slot(slot, buffer.getvalue())
 
+    def process_set_slot_vid(self, slot : int, imgs : [Image], durations : [int]):
+        """ Set a slot for a video. """
+        buffer = io.BytesIO()
+        imgs[0].save(buffer, format="gif", save_all=True, append_images=imgs[1:], duration=durations, loop=0)
+        self._client_api.set_slot(slot, buffer.getvalue())
 
     def _send_live_img(self, img):
         buffer = io.BytesIO()
