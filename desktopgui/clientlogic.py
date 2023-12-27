@@ -1,5 +1,6 @@
 from enum import Enum
-from PIL import ImageChops
+from PIL import Image, ImageChops
+
 import clientapi
 import io
 
@@ -40,8 +41,16 @@ class ClientLogic:
             self._send_live_img(self._last_screen_img)
         self._mode = Mode.LIVE_STREAM
 
+    def process_set_slot(self, slot : int, img : Image):
+        """ Set a slot for an image. """
+        buffer = io.BytesIO()
+        img.save(buffer, format="gif")
+
+        self._client_api.set_slot(slot, buffer.getvalue())
+
+
     def _send_live_img(self, img):
         buffer = io.BytesIO()
-        self._last_screen_img.save(buffer, format="gif")
+        img.save(buffer, format="gif")
         # TODO: update to better API.
-        self._client_api.set_slot(0, buffer.getvalue())
+        self._client_api.set_live(buffer.getvalue())

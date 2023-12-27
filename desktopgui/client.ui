@@ -592,7 +592,7 @@ Stream</string>
        </font>
       </property>
       <property name="title">
-       <string>Matrix Display Control:</string>
+       <string>Display Slots:</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <property name="spacing">

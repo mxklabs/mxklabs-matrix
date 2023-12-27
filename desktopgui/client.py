@@ -9,7 +9,7 @@ import sys
 import threading
 import time
 
-from PIL import ImageGrab, Image, ImageChops
+from PIL import Image, ImageChops, ImageFilter, ImageGrab
 
 from screengrab import main as screengrab
 
@@ -49,13 +49,9 @@ class ClientApp(QtWidgets.QMainWindow):
     self._is_streaming = False
     self._preview_img_unscaled = None
     self._preview_img = None
-    self._last_preview_bytes = None
+
     self._screen_preview_timer = QtCore.QTimer(self)
     self._screen_preview_timer.timeout.connect(self._update_screen_preview)
-
-    # self._screen_preview_thread = None
-    # self._screen_preview_thread_kill_event = threading.Event()
-    # self._screen_preview_thread_fired.connect(self._grab_image)
 
     self._window.combo_resample_method.addItem("Nearest", Image.NEAREST)
     self._window.combo_resample_method.addItem("Bilinear", Image.BILINEAR)
@@ -82,7 +78,6 @@ class ClientApp(QtWidgets.QMainWindow):
     # slot_layout = QtWidgets.QVBoxLayout()
     # .setLayout(slot_layout)#
 
-    self._update_enabledness()
 
     self._window.label_screen_preview.setMinimumSize(MATRIX_WIDTH, MATRIX_HEIGHT)
     self._window.label_screen_preview.setMaximumSize(MATRIX_WIDTH, MATRIX_HEIGHT)
@@ -91,12 +86,19 @@ class ClientApp(QtWidgets.QMainWindow):
     self._window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     self._window.setFixedSize(self._window.size())
 
+    self._slot_widgets = []
+
     for slot in range(CONFIG['numSlots']):
-      self._window.scroll_area_slots_contents.layout().addWidget(SlotWidget())
+      self._slot_widgets.append(SlotWidget())
+      self._slot_widgets[-1].label.setText(f"Slot {slot}:")
+      print(f'slot {slot}, {type(slot)}')
+      self._slot_widgets[-1].button_get_img.clicked.connect(lambda _,slot=slot: self._process_slot_get_img_click(slot))
+      self._slot_widgets[-1].button_get_vid.clicked.connect(lambda _,slot=slot: self._process_slot_get_vid_click(slot))
+      self._window.scroll_area_slots_contents.layout().addWidget(self._slot_widgets[-1])
+
     self._window.scroll_area_slots_contents.layout().addStretch()
 
-    self._window.show()
-
+    self._update_enabledness()
     #self._window.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize);
     self._window.show()
 
@@ -123,6 +125,8 @@ class ClientApp(QtWidgets.QMainWindow):
   def _update_enabledness(self):
     self._window.button_go_live_snapshot.setEnabled(self._grab_bbox is not None)
     self._window.button_go_live_stream.setEnabled(self._grab_bbox is not None)
+    for slot in range(CONFIG['numSlots']):
+      self._slot_widgets[slot].setEnabled(self._grab_bbox is not None)
     # self._window.button_take_video.setEnabled(False)
     # self._window.button_live.setEnabled(self._grab_bbox is not None)
     pass
@@ -133,6 +137,15 @@ class ClientApp(QtWidgets.QMainWindow):
   def _button_go_live_stream_clicked(self):
     self._client_handler.process_go_live_stream()
 
+  def _process_slot_get_img_click(self, slot):
+    assert self._preview_img is not None
+    print(f"Getting slot {slot} image.")
+
+    self._client_handler.process_set_slot(slot, self._preview_img)
+
+  def _process_slot_get_vid_click(self, slot):
+    print(f"Getting slot {slot} video.")
+
   def _update_screen_preview(self):
     # Take an image.
     assert self._grab_bbox is not None
@@ -140,7 +153,8 @@ class ClientApp(QtWidgets.QMainWindow):
     if new_preview_img.width != MATRIX_WIDTH or new_preview_img.height != MATRIX_HEIGHT:
       resample_method = self._window.combo_resample_method.itemData(self._window.combo_resample_method.currentIndex())
       new_preview_img = new_preview_img.resize((MATRIX_WIDTH, MATRIX_HEIGHT), resample=resample_method)
-
+    if self._window.checkbox_sharpen.isChecked():
+      new_preview_img = new_preview_img.filter(ImageFilter.SHARPEN)
     self._preview_img = new_preview_img
 
     # Call handler.

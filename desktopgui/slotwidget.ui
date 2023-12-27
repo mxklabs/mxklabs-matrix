@@ -48,26 +48,26 @@
     </widget>
    </item>
    <item>
-    <widget class="QToolButton" name="button_grab_img">
+    <widget class="QToolButton" name="button_get_img">
      <property name="font">
       <font>
        <pointsize>7</pointsize>
       </font>
      </property>
      <property name="text">
-      <string>Get Img</string>
+      <string>Set Img</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QToolButton" name="button_grab_vid">
+    <widget class="QToolButton" name="button_get_vid">
      <property name="font">
       <font>
        <pointsize>7</pointsize>
       </font>
      </property>
      <property name="text">
-      <string>Get Vid</string>
+      <string>Set Vid</string>
      </property>
     </widget>
    </item>
@@ -76,8 +76,8 @@
      <property name="font">
       <font>
        <pointsize>7</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="text">
