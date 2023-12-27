@@ -2,14 +2,11 @@
 """
 
 import collections
-import io
 import json
 import pathlib
 import sys
-import threading
-import time
 
-from PIL import Image, ImageChops, ImageFilter, ImageGrab
+from PIL import Image, ImageFilter, ImageGrab, ImageOps
 
 from screengrab import main as screengrab
 import gifgrabber
@@ -63,6 +60,11 @@ class ClientApp(QtWidgets.QMainWindow):
     self._window.combo_resample_method.addItem("Bicubic", Image.BICUBIC)
     self._window.combo_resample_method.addItem("Lanczos", Image.LANCZOS)
     self._window.combo_resample_method.setCurrentIndex(1)
+
+    self._window.combo_resize_method.addItem("Stretch", lambda im, size, resample: im.resize(size, resample=resample))
+    self._window.combo_resize_method.addItem("Crop", lambda im, size, resample: ImageOps.fit(im, size, method=resample))
+    self._window.combo_resize_method.addItem("Pad", lambda im, size, resample: ImageOps.pad(im, size, method=resample, color=(0,0,0)))
+    self._window.combo_resize_method.setCurrentIndex(1)
 
     self._window.push_button_1_1.clicked.connect(lambda : self._set_screen_area(width=1*MATRIX_WIDTH, height=1*MATRIX_HEIGHT))
     self._window.push_button_1_2.clicked.connect(lambda : self._set_screen_area(width=2*MATRIX_WIDTH, height=2*MATRIX_HEIGHT))
@@ -161,7 +163,8 @@ class ClientApp(QtWidgets.QMainWindow):
     new_preview_img = ImageGrab.grab(bbox=self._grab_bbox)
     if new_preview_img.width != MATRIX_WIDTH or new_preview_img.height != MATRIX_HEIGHT:
       resample_method = self._window.combo_resample_method.itemData(self._window.combo_resample_method.currentIndex())
-      new_preview_img = new_preview_img.resize((MATRIX_WIDTH, MATRIX_HEIGHT), resample=resample_method)
+      resize_function = self._window.combo_resize_method.itemData(self._window.combo_resize_method.currentIndex())
+      new_preview_img = resize_function(im=new_preview_img, size=(MATRIX_WIDTH, MATRIX_HEIGHT), resample=resample_method)
     if self._window.checkbox_sharpen.isChecked():
       new_preview_img = new_preview_img.filter(ImageFilter.SHARPEN)
     self._preview_img = new_preview_img
