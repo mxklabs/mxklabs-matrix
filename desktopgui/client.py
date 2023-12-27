@@ -44,7 +44,7 @@ class ClientApp(QtWidgets.QMainWindow):
     self._client_handler = client_handler
     self._window = uic.loadUi(pathlib.Path(__file__).parents[0] / "client.ui")
 
-    self._grab_bbox = None
+    self._grab_bbox = self._client_handler.get_client_data("bbox", None)
     self._is_streaming = False
     self._preview_img_unscaled = None
     self._preview_img = None
@@ -108,6 +108,10 @@ class ClientApp(QtWidgets.QMainWindow):
     #self._window.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize);
     self._window.show()
 
+    if self._grab_bbox is not None:
+      self._screen_preview_timer.stop()
+      self._screen_preview_timer.start(CONFIG['screenPreviewUpdateMillis'])
+
   def _set_screen_area(self, width=128, height=128, resizable=False, fixed_ratio=True):
     """ Launch screengrabber pygame window to select area of the screen. """
     # Do something.
@@ -116,7 +120,7 @@ class ClientApp(QtWidgets.QMainWindow):
       self._grab_bbox = screengrab(width=width, height=height, is_resizable=resizable, fixed_ratio=fixed_ratio)
       self._update_enabledness()
       self._show()
-
+      self._client_handler.update_client_data({"bbox": self._grab_bbox})
       # Ensure we can see a preview image.
       self._screen_preview_timer.stop()
       self._screen_preview_timer.start(CONFIG['screenPreviewUpdateMillis'])

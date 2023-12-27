@@ -1,8 +1,12 @@
 from enum import Enum
+import io
+import json
+import os
+from typing import Any
+
 from PIL import Image, ImageChops
 
 import clientapi
-import io
 
 class Mode(Enum):
    LIVE_SNAPSHOT = 0
@@ -18,6 +22,7 @@ class ClientLogic:
         self._client_api = clientapi.ClientAPI()
         self._mode = Mode.DARK
         self._last_screen_img = None
+        self._location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
     def process_screen_image(self, screen_img):
         """ Process a fresh image captured from the screen. """
@@ -58,3 +63,28 @@ class ClientLogic:
         img.save(buffer, format="gif")
         # TODO: update to better API.
         self._client_api.set_live(buffer.getvalue())
+    
+    def update_client_data(self, tochange: {str: Any}):
+        """Update client's local data.
+        """
+        try:
+            with open(os.path.join(self._location, "clientdata.json"), "r") as f:
+                data = json.load(f)
+
+            data.update(tochange)
+
+            with open(os.path.join(self._location, "clientdata.json"), "w") as f:
+                json.dump(data, f)
+        except FileNotFoundError:
+            with open(os.path.join(self._location, "clientdata.json"), "w") as f:
+                json.dump(tochange, f)
+
+    def get_client_data(self, key: str, default: Any):
+        """Update client's local data.
+        """
+        try:
+            with open(os.path.join(self._location, "clientdata.json"), "r") as f:
+                data = json.load(f)
+            return data[key]
+        except (FileNotFoundError, IndexError):
+            return default
