@@ -539,27 +539,11 @@
           </property>
           <item>
            <widget class="QToolButton" name="button_go_live_snapshot">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>30</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>7</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
             <property name="text">
              <string>Go Live
@@ -569,21 +553,11 @@ Snapshot</string>
           </item>
           <item>
            <widget class="QToolButton" name="button_go_live_stream">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>7</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
             <property name="text">
              <string>Go Live
@@ -675,7 +649,7 @@ Stream</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>187</width>
+               <width>185</width>
                <height>118</height>
               </rect>
              </property>
@@ -750,8 +724,8 @@ Stream</string>
                <property name="font">
                 <font>
                  <pointsize>7</pointsize>
-                 <weight>75</weight>
-                 <bold>true</bold>
+                 <weight>50</weight>
+                 <bold>false</bold>
                 </font>
                </property>
                <property name="text">
@@ -779,8 +753,8 @@ Stream</string>
          <property name="font">
           <font>
            <pointsize>7</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="text">
