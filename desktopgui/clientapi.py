@@ -26,7 +26,6 @@ class ClientAPI:
     if res.status_code != 201:
       print(res.content)
     
-
   def get_slot(self, slot_index : int) -> bytes | None:
     res = requests.get(f"{self.base_url}/slot/{slot_index}", timeout=TIMEOUT)
     if res.status_code == 200:
@@ -35,6 +34,11 @@ class ClientAPI:
       return None
     raise RuntimeError(f"Server gave HTTP{res.status_code}: {res.content.decode('utf-8')}")
 
+  def set_live(self, gif_data : bytes | None) -> bool:
+    res = requests.post(f"{self.base_url}/live", data=gif_data, timeout=TIMEOUT)
+    if res.status_code != 201:
+      print(res.content)
+  
   def set_mode(self, mode : Mode, slot : int | None) -> bool:
     res = requests.get(f"{self.base_url}/slot/{slot}", json={"mode": int(mode)}, timeout=TIMEOUT)
     return res.status_code == 200

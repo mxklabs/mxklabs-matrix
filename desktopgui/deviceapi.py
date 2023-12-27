@@ -42,7 +42,24 @@ class DeviceAPI:
     pass
 
   def set_live(self, gif_data : bytes) -> bool:
-    pass
+    if gif_data is None:
+        raise RuntimeError(f"TODO: Deal with None data in set_live")
+    else:
+        Image._initialized = 0
+        print(gif_data, flush=True)
+        print(Image.__version__)
+        print(type(gif_data), type(type(gif_data)), flush=True)
+        fp = io.BytesIO(gif_data)
+        fp.seek(0)
+        with Image.open(fp) as im:#, formats=["GIF"]
+            if im.n_frames < 1 or im.n_frames > 1:
+              raise RuntimeError(f"TODO: Deal with .gif that has {im.n_frames} frames")
+
+            im.seek(0)  # skip to the first frame
+
+            # self._device_gui.set_preview(im)
+            self.matrix_driver.set_image(im.convert('RGB'))
+    return True
   
   def ping(self, data : int) -> int:
     return -data

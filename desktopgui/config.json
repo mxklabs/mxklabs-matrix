@@ -5,6 +5,5 @@
   "connectToIP4Addr": "192.168.0.37",
   "port" : 5000,
   "api_timeout": 3,
-  "driverThreadCpuAffinity": 2,
-  "flaskThreadCpuAffinity": 3
+  "flaskThreadCpuAffinity" : 2
 }

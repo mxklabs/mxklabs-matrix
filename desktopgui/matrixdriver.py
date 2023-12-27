@@ -31,7 +31,6 @@ class MatrixDriver:
         options.panel_type          = ""
         options.show_refresh_rate   = 1
         options.gpio_slowdown       = 2
-        options.cpu_affinity        = CONFIG["driverThreadCpuAffinity"]
 
         # Testing
         #options.disable_hardware_pulsing = False
