@@ -32,6 +32,11 @@ def PIL_to_qimage(pil_img):
         QtGui.QImage.Format.Format_RGBA8888
     )
 
+class SlotWidget(QtWidgets.QWidget):
+  def __init__(self):
+    QtWidgets.QWidget.__init__(self)
+    uic.loadUi(pathlib.Path(__file__).parents[0] / "slotwidget.ui", self)
+
 class ClientApp(QtWidgets.QMainWindow):
   _screen_preview_thread_fired = QtCore.pyqtSignal(name="previewThreadFired")
 
@@ -39,8 +44,10 @@ class ClientApp(QtWidgets.QMainWindow):
     QtWidgets.QMainWindow.__init__(self, parent=None)
     self._client_handler = client_handler
     self._window = uic.loadUi(pathlib.Path(__file__).parents[0] / "client.ui")
+
     self._grab_bbox = None
     self._is_streaming = False
+    self._preview_img_unscaled = None
     self._preview_img = None
     self._last_preview_bytes = None
     self._screen_preview_timer = QtCore.QTimer(self)
@@ -72,6 +79,9 @@ class ClientApp(QtWidgets.QMainWindow):
     # self._window.button_take_image.clicked.connect(self._take_image)
     # self._window.button_live.clicked.connect(self._toggle_stream)
 
+    # slot_layout = QtWidgets.QVBoxLayout()
+    # .setLayout(slot_layout)#
+
     self._update_enabledness()
 
     self._window.label_screen_preview.setMinimumSize(MATRIX_WIDTH, MATRIX_HEIGHT)
@@ -80,6 +90,11 @@ class ClientApp(QtWidgets.QMainWindow):
 
     self._window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     self._window.setFixedSize(self._window.size())
+
+    for slot in range(CONFIG['numSlots']):
+      self._window.scroll_area_slots_contents.layout().addWidget(SlotWidget())
+    self._window.scroll_area_slots_contents.layout().addStretch()
+
     self._window.show()
 
     #self._window.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize);

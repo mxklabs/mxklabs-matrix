@@ -55,7 +55,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Grab Img</string>
+      <string>Get Img</string>
      </property>
     </widget>
    </item>
@@ -67,7 +67,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Grab Vid</string>
+      <string>Get Vid</string>
      </property>
     </widget>
    </item>

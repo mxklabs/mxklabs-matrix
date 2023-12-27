@@ -1,5 +1,5 @@
 from enum import Enum
-
+from PIL import ImageChops
 import clientapi
 import io
 
@@ -20,24 +20,24 @@ class ClientLogic:
 
     def process_screen_image(self, screen_img):
         """ Process a fresh image captured from the screen. """
-        self._last_screen_img = screen_img
-
         if self._mode == Mode.LIVE_STREAM:
-            self._send_live_img(screen_img)
+            # Keep blasting if it's on stream mode.
+            diff = ImageChops.difference(self._last_screen_img, screen_img)
+            if diff.getbbox() is not None:
+              self._send_live_img(screen_img)
+
+        self._last_screen_img = screen_img
 
     def process_go_live_screenshot(self):
         """ We're going live with a snapshot. """
         if self._last_screen_img is not None:
             self._send_live_img(self._last_screen_img)
-
         self._mode = Mode.LIVE_SNAPSHOT
 
     def process_go_live_stream(self):
         """ We're going live with a stream."""
-
         if self._last_screen_img is not None:
             self._send_live_img(self._last_screen_img)
-
         self._mode = Mode.LIVE_STREAM
 
     def _send_live_img(self, img):
