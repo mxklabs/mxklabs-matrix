@@ -117,9 +117,14 @@ class ClientApp(QtWidgets.QMainWindow):
     # Do something.
     try:
       self._hide()
-      self._grab_bbox = screengrab(width=width, height=height, is_resizable=resizable, fixed_ratio=fixed_ratio)
+      try:
+        self._grab_bbox = screengrab(width=width, height=height, is_resizable=resizable, fixed_ratio=fixed_ratio)
+      except RuntimeError:
+        pass # Don't update bbox if cancelling.
       self._update_enabledness()
       self._show()
+
+
       self._client_handler.update_client_data({"bbox": self._grab_bbox})
       # Ensure we can see a preview image.
       self._screen_preview_timer.stop()
@@ -129,7 +134,7 @@ class ClientApp(QtWidgets.QMainWindow):
       # If something fails, deal with it.
       self._show()
       self._grab_bbox = None
-      self._screen_preview_timer.stop
+      self._screen_preview_timer.stop()
       # self._kill_update_preview_thread()
 
   def _update_enabledness(self):
