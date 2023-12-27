@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>487</width>
-    <height>194</height>
+    <height>215</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -405,6 +405,9 @@
            </widget>
           </item>
           <item>
+           <widget class="QComboBox" name="combo_resize_method"/>
+          </item>
+          <item>
            <widget class="QLabel" name="label_sharpen">
             <property name="font">
              <font>
@@ -650,7 +653,7 @@ Stream</string>
                <x>0</x>
                <y>0</y>
                <width>185</width>
-               <height>118</height>
+               <height>139</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
