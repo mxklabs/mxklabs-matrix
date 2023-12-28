@@ -53,8 +53,11 @@ class DisplayManager:
         else:
             # We need to worry about animation.
             img = Image.open(io.BytesIO(slot_data))
+            self._thread_kill_event.clear()
             self._thread = threading.Thread(target=self._run_single_slot, args=(img, self._thread_kill_event))
+            print('created new thread')
             self._thread.start()
+            print('started new thread')
         self._mode = DisplayManagerMode.SHOW_SLOT
 
     def process_go_round_robin(self):
@@ -78,7 +81,9 @@ class DisplayManager:
     def _kill_thread(self):
       """ Kill the internal thread. """
       self._thread_kill_event.set()
+      print(f'set _thread_kill_event')
       self._thread.join()
+      print(f'joined thread')
       self._thread = None
 
     def _run_single_slot(self, img : Image.Image, kill_event : threading.Event):
