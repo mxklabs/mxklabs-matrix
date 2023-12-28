@@ -12,6 +12,12 @@ from PIL import Image, ImageFilter, ImageGrab, ImageOps
 from screengrab import main as screengrab
 import gifgrabber
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from clientlogic import ClientLogic
+    from slotmanager import SlotManager
+
 from PyQt6 import QtCore, QtGui, QtWidgets, uic
 
 class HTMLImgFinder(html.parser.HTMLParser):
@@ -91,7 +97,7 @@ class SlotWidget(QtWidgets.QWidget):
                raise ValueError(f"Cannot handle drag and drop of more than one file.")
             if num_local_files == 1:
                e.accept()
-               res = self.parent._client_handler.process_slot_load(self.parent._window, self.slot, local_file)
+               res = self.parent._client_logic.process_slot_load(self.parent._window, self.slot, local_file)
                self.parent._update_enabledness()
                return res
         if mime.hasHtml():
@@ -99,7 +105,7 @@ class SlotWidget(QtWidgets.QWidget):
           parser.feed(mime.html())
           if len(parser.imgs) >= 1:
             e.accept()
-            res = self.parent._client_handler.process_slot_load_network(self.parent._window, self.slot, parser.imgs[0])
+            res = self.parent._client_logic.process_slot_load_network(self.parent._window, self.slot, parser.imgs[0])
             self.parent._update_enabledness()
             return res
         e.ignore()
@@ -110,12 +116,13 @@ class ClientApp(QtWidgets.QMainWindow):
   _screen_preview_thread_fired = QtCore.pyqtSignal(name="previewThreadFired")
   _gif_grabber_done = QtCore.pyqtSignal(int, name="videoGrabberDone")
 
-  def __init__(self, client_handler):
+  def __init__(self, client_logic : 'ClientLogic', slot_manager : 'SlotManager'):
     QtWidgets.QMainWindow.__init__(self, parent=None)
-    self._client_handler = client_handler
+    self._client_logic = client_logic
+    self._slot_manager = slot_manager
     self._window = uic.loadUi(pathlib.Path(__file__).parents[0] / "client.ui")
 
-    self._grab_bbox = self._client_handler.get_client_data("bbox", None)
+    self._grab_bbox = self._client_logic.get_client_data("bbox", None)
     self._is_streaming = False
     self._preview_img_unscaled = None
     self._preview_img = None
@@ -202,7 +209,7 @@ class ClientApp(QtWidgets.QMainWindow):
       self._show()
 
 
-      self._client_handler.update_client_data({"bbox": self._grab_bbox})
+      self._client_logic.update_client_data({"bbox": self._grab_bbox})
       # Ensure we can see a preview image.
       self._screen_preview_timer.stop()
       self._screen_preview_timer.start(CONFIG['screenPreviewUpdateMillis'])
@@ -218,7 +225,7 @@ class ClientApp(QtWidgets.QMainWindow):
     self._window.button_go_live_snapshot.setEnabled(self._grab_bbox is not None)
     self._window.button_go_live_stream.setEnabled(self._grab_bbox is not None)
     for slot in range(CONFIG['numSlots']):
-      have_slot = self._client_handler.have_slot(slot)
+      have_slot = self._slot_manager.have_slot(slot)
       self._slot_widgets[slot].button_clear.setEnabled(have_slot)
       self._slot_widgets[slot].button_get_img.setEnabled(self._grab_bbox is not None)
       self._slot_widgets[slot].button_get_vid.setEnabled(self._grab_bbox is not None)
@@ -228,28 +235,28 @@ class ClientApp(QtWidgets.QMainWindow):
     pass
 
   def _button_go_live_snapshot_clicked(self):
-    self._client_handler.process_go_live_screenshot()
+    self._client_logic.process_go_live_screenshot()
 
   def _button_go_live_stream_clicked(self):
-    self._client_handler.process_go_live_stream()
+    self._client_logic.process_go_live_stream()
 
   def _button_go_round_robin_clicked(self):
-    self._client_handler.process_go_round_robin()
+    self._client_logic.process_go_round_robin()
 
   def _button_go_black_clicked(self):
-    self._client_handler.process_go_black()
+    self._client_logic.process_go_black()
 
   def _process_slot_clear_click(self, slot):
-    self._client_handler.process_clear_slot(slot)
+    self._client_logic.process_set_slot_img(slot, None)
     self._update_enabledness()
 
   def _process_slot_get_img_click(self, slot):
     assert self._preview_img is not None
-    self._client_handler.process_set_slot_img(slot, self._preview_img)
+    self._client_logic.process_set_slot_img(slot, self._preview_img)
     self._update_enabledness()
 
   def _process_slot_go_click(self, slot):
-    self._client_handler.process_go_slot(slot)
+    self._client_logic.process_go_slot(slot)
 
   def _process_slot_get_vid_click(self, slot):
     self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
@@ -261,12 +268,12 @@ class ClientApp(QtWidgets.QMainWindow):
       self._show()
       if filepath == '':
         return
-      self._client_handler.process_slot_load(self._window, slot, filepath)
+      self._client_logic.process_slot_load(self._window, slot, filepath)
 
   def _process_gif_grabber_done(self, slot):
     imgs = self._gif_grabber.imgs()
     durs = self._gif_grabber.durations()  
-    self._client_handler.process_set_slot_vid(slot, imgs, durs)
+    self._client_logic.process_set_slot_vid(slot, imgs, durs)
     self._gif_grabber = None
     self._update_enabledness()
 
@@ -274,10 +281,10 @@ class ClientApp(QtWidgets.QMainWindow):
     # Take an image.
     assert self._grab_bbox is not None
     new_preview_img = ImageGrab.grab(bbox=self._grab_bbox)
-    self._preview_img = self._client_handler.process_image(self._window, new_preview_img)
+    self._preview_img = self._client_logic.process_image(self._window, new_preview_img)
 
     # Call handler.
-    self._client_handler.process_screen_image(self._preview_img)
+    self._client_logic.process_screen_image(self._preview_img)
     if self._gif_grabber is not None:
       self._gif_grabber.feed_img(self._preview_img)
 
@@ -296,10 +303,14 @@ class ClientApp(QtWidgets.QMainWindow):
     QtWidgets.QApplication.exec()
 
 def main(width=128, height=128):
+  import clientapi
   import clientlogic
+  import slotmanager
   app = QtWidgets.QApplication(sys.argv)
-  client_logic = clientlogic.ClientLogic()
-  client_app = ClientApp(client_logic)
+  client_api = clientapi.ClientAPI()
+  slot_manager = slotmanager.HTTPBackedSlotManager(client_api)
+  client_logic = clientlogic.ClientLogic(client_api, slot_manager)
+  client_app = ClientApp(client_logic, slot_manager)
   app.exec()
 
 

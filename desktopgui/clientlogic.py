@@ -9,7 +9,12 @@ from urllib.parse import urlsplit, urlunsplit
 
 from PIL import Image, ImageChops, ImageFilter
 
-import clientapi
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from clientapi import ClientAPI
+    from slotmanager import SlotManager
+
 from slotmanager import SlotType
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
@@ -27,25 +32,15 @@ class Mode(Enum):
 EXT_TO_TYPE_MAP = {"png": SlotType.IMG, "jpg": SlotType.IMG, "gif": SlotType.IMG}
 
 class ClientLogic:
-    def __init__(self):
+
+    def __init__(self, client_api : 'ClientAPI', slot_manager : 'SlotManager'):
+
         """ Constructor for client logic class. """
-        self._client_api = clientapi.ClientAPI()
+        self._client_api = client_api
+        self._slot_manager = slot_manager
         self._mode = Mode.DARK
         self._last_screen_img = None
         self._location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        self._have_slot = [False] * CONFIG['numSlots']
-
-        # Check if we got slots.
-        try:
-            for i in range(CONFIG['numSlots']):
-                if self._client_api.get_slot(i) is not None:
-                    self._have_slot[i] = True
-        except requests.exceptions.ConnectionError:
-            pass
-
-    def have_slot(self, slot : int) -> bool:
-        """ Check if we have a slot. """
-        return self._have_slot[slot]
 
     def process_screen_image(self, screen_img):
         """ Process a fresh image captured from the screen. """
@@ -84,38 +79,30 @@ class ClientLogic:
         self._client_api.go_black()
         self._mode = Mode.DARK
 
-    def process_clear_slot(self, slot : int):
-        """ Clear a slot. """
-        if self._client_api.clear_slot(slot):
-            self._have_slot[slot] = False
-
     def process_set_slot_img(self, slot : int, img : Image.Image | None):
         """ Set a slot for an image. """
         if img is None:
-            self._client_api.set_slot(slot, None, None)
-            self._have_slot[slot] = False
+            self._slot_manager.set_slot(slot, SlotType.NULL, None)
         else:
             buffer = io.BytesIO()
             img.save(buffer, format="png")
-            self._client_api.set_slot(slot, SlotType.IMG, buffer.getvalue())
-            self._have_slot[slot] = True
+            self._slot_manager.set_slot(slot, SlotType.IMG, buffer.getvalue())
 
     def process_set_slot_vid(self, slot : int, imgs : [Image], durations : [int]):
         """ Set a slot for a video. """
         buffer = io.BytesIO()
         imgs[0].save(buffer, format="gif", save_all=True, append_images=imgs[1:], duration=durations, loop=0)
-        self._client_api.set_slot(slot, SlotType.VID, buffer.getvalue())
-        self._have_slot[slot] = True
-    
+        self._slot_manager.set_slot(slot, SlotType.VID, buffer.getvalue())
+
     def process_slot_load(self, window, slot: int, filepath: str):
         file = pathlib.Path(filepath)
         ext = file.suffix.split(".")[-1]
         slottype = EXT_TO_TYPE_MAP[ext]
         if slottype != SlotType.IMG:
             # Most types, we just upload the file.
-            with open(file, "rb") as f:  
-                self._client_api.set_slot(slot, slottype, f.read())
-                self._have_slot[slot] = True
+            with open(file, "rb") as f:
+                self._slot_manager.set_slot(slot, slottype, f.read())
+
         else:
             img = Image.open(file)
             assert img.n_frames > 0
@@ -131,7 +118,7 @@ class ClientLogic:
                     imgs.append(self.process_image(window, img))
                     durations.append(img.info["duration"])
                 self.process_set_slot_vid(slot, imgs, durations)
-    
+
     def process_slot_load_network(self, window, slot: int, url: str):
         file = pathlib.Path(urlunsplit(urlsplit(url)._replace(query="", fragment="")))
         ext = file.suffix.split(".")[-1]
@@ -139,8 +126,8 @@ class ClientLogic:
         response = requests.get(url)
         if slottype != SlotType.IMG:
             # Most types, we just upload the file.
-            self._client_api.set_slot(slot, slottype, response.content)
-            self._have_slot[slot] = True
+            self._slot_manager.set_slot(slot, slottype, response.content)
+
         else:
             img = Image.open(io.BytesIO(response.content))
             frames = img.n_frames if hasattr(img, "n_frames") else 1
@@ -157,7 +144,7 @@ class ClientLogic:
                     imgs.append(self.process_image(window, img))
                     durations.append(img.info["duration"])
                 self.process_set_slot_vid(slot, imgs, durations)
-    
+
     def process_image(self, window, img):
         if img.width != MATRIX_WIDTH or img.height != MATRIX_HEIGHT:
             resample_method = window.combo_resample_method.itemData(window.combo_resample_method.currentIndex())

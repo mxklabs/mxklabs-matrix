@@ -646,7 +646,7 @@ Stream</string>
            <widget class="QScrollArea" name="scroll_area_slots">
             <property name="minimumSize">
              <size>
-              <width>230</width>
+              <width>250</width>
               <height>0</height>
              </size>
             </property>
@@ -658,7 +658,7 @@ Stream</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>228</width>
+               <width>248</width>
                <height>139</height>
               </rect>
              </property>

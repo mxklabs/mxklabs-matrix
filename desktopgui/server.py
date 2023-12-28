@@ -14,7 +14,7 @@ def matrix_server(api):
         except TypeError:
             return f"{slot_index} provided couldn't be cast to int.", 400
         try:
-            res = api.set_slot(slot, None, None)
+            res = api.set_slot(slot, SlotType.NULL, None)
         except Exception as e:
             import traceback
             traceback.print_exc()
