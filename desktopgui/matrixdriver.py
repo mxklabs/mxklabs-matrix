@@ -31,6 +31,8 @@ class MatrixDriver:
         options.panel_type          = ""
         options.show_refresh_rate   = 1
         options.gpio_slowdown       = 2
+        options.drop_priv_user      = CONFIG['user']
+        options.drop_priv_group     = CONFIG['group']
 
         # Testing
         #options.disable_hardware_pulsing = False
