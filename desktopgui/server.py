@@ -65,7 +65,18 @@ def matrix_server(api):
     def go_slot(slot_index):
         try:
             slot = int(slot_index)
-            api_res = api.go_slot(slot)
+            api.go_slot(slot)
+            return '', 200
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return str(e), 500
+
+
+    @app.route("/slot/round_robin", methods=["GET"])
+    def go_round_robin():
+        try:
+            api.go_round_robin()
             return '', 200
         except Exception as e:
             import traceback

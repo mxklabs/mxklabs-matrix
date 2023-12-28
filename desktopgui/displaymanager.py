@@ -54,15 +54,20 @@ class DisplayManager:
             # We need to worry about animation.
             img = Image.open(io.BytesIO(slot_data))
             self._thread_kill_event.clear()
-            self._thread = threading.Thread(target=self._run_single_slot, args=(img, self._thread_kill_event))
-            print('created new thread')
+            self._thread = threading.Thread(target=self._run_single_slot_vid, args=(img, self._thread_kill_event))
             self._thread.start()
-            print('started new thread')
         self._mode = DisplayManagerMode.SHOW_SLOT
 
     def process_go_round_robin(self):
         """ Do the slots in a round robin fashion. """
-        raise RuntimeError("Not Implemented")
+        if self._thread is not None:
+            self._kill_thread()
+
+        # Start a round robin thread.
+        self._thread_kill_event.clear()
+        self._thread = threading.Thread(target=self._run_round_robin, args=(self._thread_kill_event,))
+        self._thread.start()
+        self._mode = DisplayManagerMode.ROUND_ROBIN
 
     def process_live_img(self, img : Image.Image):
         """ Set a live image. """
@@ -81,14 +86,32 @@ class DisplayManager:
     def _kill_thread(self):
       """ Kill the internal thread. """
       self._thread_kill_event.set()
-      print(f'set _thread_kill_event')
       self._thread.join()
-      print(f'joined thread')
       self._thread = None
 
-    def _run_single_slot(self, img : Image.Image, kill_event : threading.Event):
-        """ Show animation in a single slot. """
+    def _run_single_slot_img(self, img : Image.Image, kill_event : threading.Event, minimumTime: float | None=None):
+        """ Show static image in a single slot. Designed to run as a part
+            of a thread.  """
+        start_time = time.perf_counter()
+
+        # Set the image at the start.
+        self._driver.set_image(img)
+
+        while not kill_event.is_set():
+            now = time.perf_counter()
+            if (now - start_time) < minimumTime:
+                time.sleep(0.01)
+                continue
+            else:
+                break
+
+    def _run_single_slot_vid(self, img : Image.Image, kill_event : threading.Event, loop : bool=True, minimumTime: float | None=None):
+        """ Show animation in a single slot. Designed to run as part of a thread.
+            If loop==False then loop at least for the minimum time and then 
+            stop. Else loop indefinitely.  """
         frame = 0
+        start_time = time.perf_counter()
+
         while not kill_event.is_set():
             try:
                 img.seek(frame)
@@ -99,5 +122,37 @@ class DisplayManager:
                 time.sleep(img.info['duration'] / 1000.0)
 
             except EOFError:
-                frame = 0
-                continue
+                now = time.perf_counter()
+                if loop or (now - start_time) < minimumTime:
+                    frame = 0
+                    continue
+                else:
+                    break
+
+    def _run_round_robin(self, kill_event : threading.Event):
+        """ Show animation in a single slot. """
+
+        img = None
+        slot_type = None
+        slot_data = None
+        slot = 0
+        frame = 0
+
+        while not kill_event.is_set():
+
+            # Find next slot with data.
+            for _ in range(CONFIG['numSlots']):
+                res = self._slot_manager.get_slot(slot)
+                if res is not None:
+                    slot_type, slot_data = res
+                    img = Image.open(io.BytesIO(slot_data))
+                    if slot_type == SlotType.IMG:
+                        self._run_single_slot_img(img, kill_event, minimumTime=CONFIG['minimumSlotTime'])
+                    elif slot_type == SlotType.VID:
+                        self._run_single_slot_vid(img, kill_event, loop=False, minimumTime=CONFIG['minimumSlotTime'])
+                    slot = (slot + 1) % CONFIG['numSlots']
+                    break
+                else:
+                    slot = (slot + 1) % CONFIG['numSlots']
+
+            time.sleep(0.01)
