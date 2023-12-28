@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>487</width>
+    <width>522</width>
     <height>215</height>
    </rect>
   </property>
@@ -644,6 +644,12 @@ Stream</string>
           </property>
           <item>
            <widget class="QScrollArea" name="scroll_area_slots">
+            <property name="minimumSize">
+             <size>
+              <width>230</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -652,7 +658,7 @@ Stream</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>185</width>
+               <width>228</width>
                <height>139</height>
               </rect>
              </property>
@@ -741,13 +747,6 @@ Stream</string>
                <property name="enabled">
                 <bool>true</bool>
                </property>
-               <property name="font">
-                <font>
-                 <pointsize>7</pointsize>
-                 <weight>50</weight>
-                 <bold>false</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>Go Round Robin</string>
                </property>
@@ -769,13 +768,6 @@ Stream</string>
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>7</pointsize>
-           <weight>50</weight>
-           <bold>false</bold>
-          </font>
          </property>
          <property name="text">
           <string>Go Black</string>

@@ -37,23 +37,20 @@
        <height>0</height>
       </size>
      </property>
-     <property name="font">
-      <font>
-       <pointsize>7</pointsize>
-      </font>
-     </property>
      <property name="text">
       <string>Slot 1:</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QToolButton" name="button_get_img">
-     <property name="font">
-      <font>
-       <pointsize>7</pointsize>
-      </font>
+    <widget class="QToolButton" name="button_clear">
+     <property name="text">
+      <string>Clear</string>
      </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="button_get_img">
      <property name="text">
       <string>Set Img</string>
      </property>
@@ -61,11 +58,6 @@
    </item>
    <item>
     <widget class="QToolButton" name="button_get_vid">
-     <property name="font">
-      <font>
-       <pointsize>7</pointsize>
-      </font>
-     </property>
      <property name="text">
       <string>Set Vid</string>
      </property>
@@ -73,13 +65,6 @@
    </item>
    <item>
     <widget class="QToolButton" name="button_go">
-     <property name="font">
-      <font>
-       <pointsize>7</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
      <property name="text">
       <string>Go</string>
      </property>
