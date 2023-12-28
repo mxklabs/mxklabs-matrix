@@ -150,6 +150,9 @@ class ClientApp(QtWidgets.QMainWindow):
 
     self._window.button_go_live_snapshot.clicked.connect(self._button_go_live_snapshot_clicked)
     self._window.button_go_live_stream.clicked.connect(self._button_go_live_stream_clicked)
+    self._window.button_go_round_robin.clicked.connect(self._button_go_round_robin_clicked)
+
+    self._window.button_go_black.clicked.connect(self._button_go_black_clicked)
     # self._window.button_take_image.clicked.connect(self._take_image)
     # self._window.button_live.clicked.connect(self._toggle_stream)
 
@@ -229,6 +232,12 @@ class ClientApp(QtWidgets.QMainWindow):
 
   def _button_go_live_stream_clicked(self):
     self._client_handler.process_go_live_stream()
+
+  def _button_go_round_robin_clicked(self):
+    self._client_handler.process_go_round_robin()
+
+  def _button_go_black_clicked(self):
+    self._client_handler.process_go_black()
 
   def _process_slot_clear_click(self, slot):
     self._client_handler.process_clear_slot(slot)

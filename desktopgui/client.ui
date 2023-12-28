@@ -646,7 +646,7 @@ Stream</string>
            <widget class="QScrollArea" name="scroll_area_slots">
             <property name="minimumSize">
              <size>
-              <width>250</width>
+              <width>230</width>
               <height>0</height>
              </size>
             </property>
@@ -658,8 +658,8 @@ Stream</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>248</width>
-               <height>145</height>
+               <width>228</width>
+               <height>139</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -728,17 +728,17 @@ Stream</string>
                 <bool>true</bool>
                </property>
                <property name="text">
-                <string>Save</string>
+                <string>Save All</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QToolButton" name="button_load_slots">
+              <widget class="QToolButton" name="button_load_all_slots">
                <property name="enabled">
                 <bool>true</bool>
                </property>
                <property name="text">
-                <string>Load</string>
+                <string>Load All</string>
                </property>
               </widget>
              </item>
