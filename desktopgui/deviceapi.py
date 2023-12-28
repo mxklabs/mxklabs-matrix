@@ -20,6 +20,7 @@ class DeviceAPI:
         self._display_manager = display_manager
         self._slot_manager = slot_manager
 
+
     def set_slot(self, slot : int, slot_type : SlotType, data : bytes | None) -> bool:
         return self._slot_manager.set_slot(slot, slot_type, data)
 
