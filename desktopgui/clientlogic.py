@@ -3,15 +3,19 @@ import io
 import json
 import os
 import pathlib
+import requests
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageFilter
 
 import clientapi
 from slotmanager import SlotType
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
+    MATRIX_WIDTH = CONFIG['matrixWidth']
+    MATRIX_HEIGHT = CONFIG['matrixHeight']
 
 class Mode(Enum):
    LIVE_SNAPSHOT = 0
@@ -20,8 +24,9 @@ class Mode(Enum):
    SLOT_ROUND_ROBIN = 3
    DARK = 4
 
-class ClientLogic:
+EXT_TO_TYPE_MAP = {"png": SlotType.IMG, "jpg": SlotType.IMG, "gif": SlotType.IMG}
 
+class ClientLogic:
     def __init__(self):
         """ Constructor for client logic class. """
         self._client_api = clientapi.ClientAPI()
@@ -31,9 +36,12 @@ class ClientLogic:
         self._have_slot = [False] * CONFIG['numSlots']
 
         # Check if we got slots.
-        for i in range(CONFIG['numSlots']):
-            if self._client_api.get_slot(i) is not None:
-                self._have_slot[i] = True
+        try:
+            for i in range(CONFIG['numSlots']):
+                if self._client_api.get_slot(i) is not None:
+                    self._have_slot[i] = True
+        except requests.exceptions.ConnectionError:
+            pass
 
     def have_slot(self, slot : int) -> bool:
         """ Check if we have a slot. """
@@ -74,7 +82,7 @@ class ClientLogic:
     def process_set_slot_img(self, slot : int, img : Image.Image | None):
         """ Set a slot for an image. """
         if img is None:
-            self._client_api.set_slot(slot, None)
+            self._client_api.set_slot(slot, None, None)
             self._have_slot[slot] = False
         else:
             buffer = io.BytesIO()
@@ -88,6 +96,67 @@ class ClientLogic:
         imgs[0].save(buffer, format="gif", save_all=True, append_images=imgs[1:], duration=durations, loop=0)
         self._client_api.set_slot(slot, SlotType.VID, buffer.getvalue())
         self._have_slot[slot] = True
+    
+    def process_slot_load(self, window, slot: int, filepath: str):
+        file = pathlib.Path(filepath)
+        ext = file.suffix.split(".")[-1]
+        slottype = EXT_TO_TYPE_MAP[ext]
+        if slottype != SlotType.IMG:
+            # Most types, we just upload the file.
+            with open(file, "rb") as f:  
+                self._client_api.set_slot(slot, slottype, f.read())
+                self._have_slot[slot] = True
+        else:
+            img = Image.open(file)
+            assert img.n_frames > 0
+            if img.n_frames == 1:
+                img = self.process_image(window, img)
+                self.process_set_slot_img(slot, img)
+            else:
+                # > 1 frame
+                imgs = []
+                durations = []
+                for frame in range(img.n_frames):
+                    img.seek(frame)
+                    imgs.append(self.process_image(window, img))
+                    durations.append(img.info["duration"])
+                self.process_set_slot_vid(slot, imgs, durations)
+    
+    def process_slot_load_network(self, window, slot: int, url: str):
+        file = pathlib.Path(urlunsplit(urlsplit(url)._replace(query="", fragment="")))
+        ext = file.suffix.split(".")[-1]
+        slottype = EXT_TO_TYPE_MAP[ext]
+        response = requests.get(url)
+        if slottype != SlotType.IMG:
+            # Most types, we just upload the file.
+            self._client_api.set_slot(slot, slottype, response.content)
+            self._have_slot[slot] = True
+        else:
+            img = Image.open(io.BytesIO(response.content))
+            frames = img.n_frames if hasattr(img, "n_frames") else 1
+            assert frames > 0
+            if frames == 1:
+                img = self.process_image(window, img)
+                self.process_set_slot_img(slot, img)
+            else:
+                # > 1 frame
+                imgs = []
+                durations = []
+                for frame in range(frames):
+                    img.seek(frame)
+                    imgs.append(self.process_image(window, img))
+                    durations.append(img.info["duration"])
+                self.process_set_slot_vid(slot, imgs, durations)
+    
+    def process_image(self, window, img):
+        if img.width != MATRIX_WIDTH or img.height != MATRIX_HEIGHT:
+            resample_method = window.combo_resample_method.itemData(window.combo_resample_method.currentIndex())
+            resize_function = window.combo_resize_method.itemData(window.combo_resize_method.currentIndex())
+            img = resize_function(im=img, size=(MATRIX_WIDTH, MATRIX_HEIGHT), resample=resample_method)
+        if window.checkbox_sharpen.isChecked():
+            img = img.filter(ImageFilter.SHARPEN)
+        return img.convert("RGB")
+
 
     def _send_live_img(self, img):
         buffer = io.BytesIO()

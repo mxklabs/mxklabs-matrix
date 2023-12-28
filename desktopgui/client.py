@@ -5,6 +5,7 @@ import collections
 import json
 import pathlib
 import sys
+import html.parser
 
 from PIL import Image, ImageFilter, ImageGrab, ImageOps
 
@@ -12,6 +13,17 @@ from screengrab import main as screengrab
 import gifgrabber
 
 from PyQt6 import QtCore, QtGui, QtWidgets, uic
+
+class HTMLImgFinder(html.parser.HTMLParser):
+    def __init__(self):
+       html.parser.HTMLParser.__init__(self)
+       self.imgs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "img":
+            for k, v in attrs:
+               if k == "src":
+                  self.imgs.append(v)
 
 Resolution = collections.namedtuple("Resolution", ["width", "height"])
 
@@ -31,9 +43,68 @@ def PIL_to_qimage(pil_img):
     )
 
 class SlotWidget(QtWidgets.QWidget):
-  def __init__(self):
-    QtWidgets.QWidget.__init__(self)
-    uic.loadUi(pathlib.Path(__file__).parents[0] / "slotwidget.ui", self)
+    def __init__(self, parent, slot):
+        QtWidgets.QWidget.__init__(self)
+        uic.loadUi(pathlib.Path(__file__).parents[0] / "slotwidget.ui", self)
+        self.parent = parent
+        self.slot = slot
+
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, e):
+        mime = e.mimeData()
+        if mime.hasUrls():
+            #Check for URLS (local files only)
+            num_local_files = 0
+            local_file = None
+            for url in mime.urls():
+                if url.isLocalFile():
+                    local_file = url.toLocalFile()
+                    num_local_files += 1
+            if num_local_files > 1:
+               e.ignore()
+               return
+            if num_local_files == 1:
+               e.accept()
+               return
+        if mime.hasHtml():
+          parser = HTMLImgFinder()
+          parser.feed(mime.html())
+          if len(parser.imgs) >= 1:
+            e.accept()
+            return
+        e.ignore()
+
+ 
+    def dropEvent(self, e):
+        mime = e.mimeData()
+        if mime.hasUrls():
+            #Check for URLS (local files only)
+            num_local_files = 0
+            local_file = None
+            for url in mime.urls():
+                if url.isLocalFile():
+                    local_file = url.toLocalFile()
+                    num_local_files += 1
+            if num_local_files > 1:
+               e.ignore()
+               raise ValueError(f"Cannot handle drag and drop of more than one file.")
+            if num_local_files == 1:
+               e.accept()
+               res = self.parent._client_handler.process_slot_load(self.parent._window, self.slot, local_file)
+               self.parent._update_enabledness()
+               return res
+        if mime.hasHtml():
+          parser = HTMLImgFinder()
+          parser.feed(mime.html())
+          if len(parser.imgs) >= 1:
+            e.accept()
+            res = self.parent._client_handler.process_slot_load_network(self.parent._window, self.slot, parser.imgs[0])
+            self.parent._update_enabledness()
+            return res
+        e.ignore()
+
+
 
 class ClientApp(QtWidgets.QMainWindow):
   _screen_preview_thread_fired = QtCore.pyqtSignal(name="previewThreadFired")
@@ -96,11 +167,12 @@ class ClientApp(QtWidgets.QMainWindow):
     self._slot_widgets = []
 
     for slot in range(CONFIG['numSlots']):
-      self._slot_widgets.append(SlotWidget())
+      self._slot_widgets.append(SlotWidget(self, slot))
       self._slot_widgets[-1].label.setText(f"Slot {slot}:")
       self._slot_widgets[-1].button_clear.clicked.connect(lambda _,slot=slot: self._process_slot_clear_click(slot))
       self._slot_widgets[-1].button_get_img.clicked.connect(lambda _,slot=slot: self._process_slot_get_img_click(slot))
       self._slot_widgets[-1].button_get_vid.clicked.connect(lambda _,slot=slot: self._process_slot_get_vid_click(slot))
+      self._slot_widgets[-1].button_load.clicked.connect(lambda _,slot=slot: self._process_slot_load(slot))
       self._slot_widgets[-1].button_go.clicked.connect(lambda _,slot=slot: self._process_slot_go_click(slot))
       self._window.scroll_area_slots_contents.layout().addWidget(self._slot_widgets[-1])
 
@@ -174,6 +246,14 @@ class ClientApp(QtWidgets.QMainWindow):
     self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
     print(f"Getting slot {slot} video.")
 
+  def _process_slot_load(self, slot):
+      self._hide()
+      filepath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', filter="All valid types (*.jpg *.gif *.png);;Image/Video files (*.jpg *.gif *.png)")
+      self._show()
+      if filepath == '':
+        return
+      self._client_handler.process_slot_load(self._window, slot, filepath)
+
   def _process_gif_grabber_done(self, slot):
     imgs = self._gif_grabber.imgs()
     durs = self._gif_grabber.durations()  
@@ -185,13 +265,7 @@ class ClientApp(QtWidgets.QMainWindow):
     # Take an image.
     assert self._grab_bbox is not None
     new_preview_img = ImageGrab.grab(bbox=self._grab_bbox)
-    if new_preview_img.width != MATRIX_WIDTH or new_preview_img.height != MATRIX_HEIGHT:
-      resample_method = self._window.combo_resample_method.itemData(self._window.combo_resample_method.currentIndex())
-      resize_function = self._window.combo_resize_method.itemData(self._window.combo_resize_method.currentIndex())
-      new_preview_img = resize_function(im=new_preview_img, size=(MATRIX_WIDTH, MATRIX_HEIGHT), resample=resample_method)
-    if self._window.checkbox_sharpen.isChecked():
-      new_preview_img = new_preview_img.filter(ImageFilter.SHARPEN)
-    self._preview_img = new_preview_img
+    self._preview_img = self._client_handler.process_image(self._window, new_preview_img)
 
     # Call handler.
     self._client_handler.process_screen_image(self._preview_img)
