@@ -52,7 +52,7 @@ def matrix_server(api):
                 return '', 204
             else:
                 slot_type, gif_data = api_res
-                if gif_data is None:
+                if gif_data is None or slot_type == SlotType.NULL:
                     return '', 204
                 return jsonify({
                   "slotType" : int(slot_type),

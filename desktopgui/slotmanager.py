@@ -46,7 +46,7 @@ class SlotManager:
       if data is None:
         self._slots[slot] = (SlotType.NULL, None)
       else:
-        self._slots[slot] = (slot_type, bytes)
+        self._slots[slot] = (slot_type, data)
     return res
 
   def get_slot(self, slot : int) -> Tuple[SlotType, bytes] | None:
