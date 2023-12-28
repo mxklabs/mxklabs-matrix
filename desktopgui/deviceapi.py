@@ -10,10 +10,10 @@ from PIL import Image
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
-    SLOT_DATA_DIR = pathlib.Path(CONFIG['slotDataDir'])
-    SLOT_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    shutil.chown(SLOT_DATA_DIR, user=CONFIG['user'], group=CONFIG['group'])
-    os.chmod(SLOT_DATA_DIR, 0o777)
+    # SLOT_DATA_DIR = pathlib.Path(CONFIG['slotDataDir'])
+    # SLOT_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # shutil.chown(SLOT_DATA_DIR, user=CONFIG['user'], group=CONFIG['group'])
+    # os.chmod(SLOT_DATA_DIR, 0o777)
 
 class DeviceAPI:
   def __init__(self, matrix_driver):

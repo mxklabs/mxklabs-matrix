@@ -7,8 +7,10 @@ import sys
 import threading
 
 import deviceapi
+import displaymanager
 import matrixdriver
 import server
+import slotmanager
 
 from PIL import Image
 
@@ -22,6 +24,8 @@ if __name__ == "__main__":
 
 
   matrix_driver = matrixdriver.MatrixDriver()
+  slot_manager = slotmanager.FileBackedSlotManager()
+  display_manager = displaymanager.DisplayManager(matrix_driver, slot_manager)
   device_api = deviceapi.DeviceAPI(matrix_driver)
   matrix_server = server.matrix_server(device_api)
   server_thread = threading.Thread(target=matrix_server, kwargs={
