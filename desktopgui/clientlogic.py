@@ -71,14 +71,14 @@ class ClientLogic:
         if self._client_api.clear_slot(slot):
             self._have_slot[slot] = False
 
-    def process_set_slot(self, slot : int, img : Image.Image | None):
+    def process_set_slot_img(self, slot : int, img : Image.Image | None):
         """ Set a slot for an image. """
         if img is None:
             self._client_api.set_slot(slot, None)
             self._have_slot[slot] = False
         else:
             buffer = io.BytesIO()
-            img.save(buffer, format="gif")
+            img.save(buffer, format="png")
             self._client_api.set_slot(slot, SlotType.IMG, buffer.getvalue())
             self._have_slot[slot] = True
 

@@ -164,7 +164,7 @@ class ClientApp(QtWidgets.QMainWindow):
 
   def _process_slot_get_img_click(self, slot):
     assert self._preview_img is not None
-    self._client_handler.process_set_slot(slot, self._preview_img)
+    self._client_handler.process_set_slot_img(slot, self._preview_img)
     self._update_enabledness()
 
   def _process_slot_go_click(self, slot):
