@@ -83,6 +83,17 @@ def matrix_server(api):
             traceback.print_exc()
             return str(e), 500
 
+
+    @app.route("/mode/black", methods=["GET"])
+    def go_black():
+        try:
+            api.go_black()
+            return '', 200
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return str(e), 500
+
     @app.route("/live", methods=["POST"])
     def set_live():
         gif_data = request.get_data()

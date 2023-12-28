@@ -34,6 +34,9 @@ class DeviceAPI:
     def go_round_robin(self) -> None:
         self._display_manager.process_go_round_robin()
 
+    def go_black(self) -> None:
+        self._display_manager.process_go_black()
+
     def set_live(self, data : bytes) -> bool:
         if data is None:
             raise RuntimeError(f"TODO: Deal with None data in set_live")
