@@ -46,16 +46,16 @@ class ClientAPI:
     if res.status_code == 204:
       return None
     raise RuntimeError(f"Server gave HTTP{res.status_code}: {res.content.decode('utf-8')}")
+  
+  def go_slot(self, slot_index : int) -> bool:
+    res = requests.get(f"{self.base_url}/slot/{slot_index}/go", timeout=TIMEOUT)
+    return res.status_code == 200
 
   def set_live(self, gif_data : bytes) -> bool:
     """ Set a live image. """
     res = requests.post(f"{self.base_url}/live", data=gif_data, timeout=TIMEOUT)
     if res.status_code != 201:
       print(res.content)
-
-  def set_mode(self, mode : Mode, slot : int | None) -> bool:
-    res = requests.get(f"{self.base_url}/slot/{slot}", json={"mode": int(mode)}, timeout=TIMEOUT)
-    return res.status_code == 200
 
   def ping(self, ping_id : int) -> int:
     res = requests.get(f"{self.base_url}/ping/{ping_id}", json={"ping_id": int(ping_id)}, timeout=TIMEOUT)

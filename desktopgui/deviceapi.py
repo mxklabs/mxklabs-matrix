@@ -27,6 +27,9 @@ class DeviceAPI:
     def get_slot(self, slot_index : int) -> Tuple[SlotType, bytes] | None:
         return self._slot_manager.get_slot(slot_index)
 
+    def go_slot(self, slot_index : int) -> None:
+        self._display_manager.process_go_slot(slot_index)
+
     def set_live(self, data : bytes) -> bool:
         if data is None:
             raise RuntimeError(f"TODO: Deal with None data in set_live")

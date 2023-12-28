@@ -60,7 +60,17 @@ def matrix_server(api):
             import traceback
             traceback.print_exc()
             return str(e), 500
-        
+
+    @app.route("/slot/<slot_index>/go", methods=["GET"])
+    def go_slot(slot_index):
+        try:
+            slot = int(slot_index)
+            api_res = api.go_slot(slot)
+            return '', 200
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return str(e), 500
 
     @app.route("/live", methods=["POST"])
     def set_live():
