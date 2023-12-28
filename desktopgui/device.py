@@ -26,7 +26,7 @@ if __name__ == "__main__":
   matrix_driver = matrixdriver.MatrixDriver()
   slot_manager = slotmanager.FileBackedSlotManager()
   display_manager = displaymanager.DisplayManager(matrix_driver, slot_manager)
-  device_api = deviceapi.DeviceAPI(matrix_driver)
+  device_api = deviceapi.DeviceAPI(display_manager, slot_manager)
   matrix_server = server.matrix_server(device_api)
   server_thread = threading.Thread(target=matrix_server, kwargs={
      "host": CONFIG['listenIP4Addr'],

@@ -9,10 +9,10 @@ def matrix_server(api):
             slot = int(slot_index)
         except TypeError:
             return f"{slot_index} provided couldn't be cast to int.", 400
-        gif_data = request.get_data()
+        data = request.get_data()
         # print(gif_data, flush=True)
         try:
-            res = api.set_slot(slot, gif_data)
+            res = api.set_slot(slot, data)
         except Exception as e:
             import traceback
             traceback.print_exc()
