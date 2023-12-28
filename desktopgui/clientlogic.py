@@ -66,6 +66,16 @@ class ClientLogic:
         self._client_api.go_slot(slot)
         self._mode = Mode.SLOT_SPECIFIC
 
+    def process_go_round_robin(self):
+        """ Display all slots in round-robin fashion. """
+        self._client_api.go_round_robin()
+        self._mode = Mode.SLOT_ROUND_ROBIN
+
+    def process_go_black(self):
+        """ Display nothing. """
+        self._client_api.go_black()
+        self._mode = Mode.DARK
+
     def process_clear_slot(self, slot : int):
         """ Clear a slot. """
         if self._client_api.clear_slot(slot):
