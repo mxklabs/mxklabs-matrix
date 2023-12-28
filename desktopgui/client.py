@@ -98,6 +98,7 @@ class ClientApp(QtWidgets.QMainWindow):
     for slot in range(CONFIG['numSlots']):
       self._slot_widgets.append(SlotWidget())
       self._slot_widgets[-1].label.setText(f"Slot {slot}:")
+      self._slot_widgets[-1].button_clear.clicked.connect(lambda _,slot=slot: self._process_slot_clear_click(slot))
       self._slot_widgets[-1].button_get_img.clicked.connect(lambda _,slot=slot: self._process_slot_get_img_click(slot))
       self._slot_widgets[-1].button_get_vid.clicked.connect(lambda _,slot=slot: self._process_slot_get_vid_click(slot))
       self._window.scroll_area_slots_contents.layout().addWidget(self._slot_widgets[-1])
@@ -156,9 +157,14 @@ class ClientApp(QtWidgets.QMainWindow):
   def _button_go_live_stream_clicked(self):
     self._client_handler.process_go_live_stream()
 
+  def _process_slot_clear_click(self, slot):
+    self._client_handler.process_clear_slot(slot)
+    self._update_enabledness()
+
   def _process_slot_get_img_click(self, slot):
     assert self._preview_img is not None
     self._client_handler.process_set_slot(slot, self._preview_img)
+    self._update_enabledness()
 
   def _process_slot_get_vid_click(self, slot):
     self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
@@ -169,6 +175,7 @@ class ClientApp(QtWidgets.QMainWindow):
     durs = self._gif_grabber.durations()  
     self._client_handler.process_set_slot_vid(slot, imgs, durs)
     self._gif_grabber = None
+    self._update_enabledness()
 
   def _update_screen_preview(self):
     # Take an image.

@@ -22,11 +22,17 @@ class ClientAPI:
     self.base_url = base_url
     self.matrix_driver = None
 
+  def clear_slot(self, slot_index : int) -> bool:
+    res = requests.delete(f"{self.base_url}/slot/{slot_index}", timeout=TIMEOUT)
+    if res.status_code != 200:
+      print(res.content)
+    return res.status_code == 200
+
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
     res = requests.post(f"{self.base_url}/slot/{slot_index}", data=gif_data, timeout=TIMEOUT)
-    if res.status_code != 201:
+    if res.status_code != 200:
       print(res.content)
-    
+
   def get_slot(self, slot_index : int) -> bytes | None:
     res = requests.get(f"{self.base_url}/slot/{slot_index}", timeout=TIMEOUT)
     if res.status_code == 200:

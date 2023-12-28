@@ -60,6 +60,11 @@ class ClientLogic:
             self._send_live_img(self._last_screen_img)
         self._mode = Mode.LIVE_STREAM
 
+    def process_clear_slot(self, slot : int):
+        """ Clear a slot. """
+        if self._client_api.clear_slot(slot):
+            self._have_slot[slot] = False
+
     def process_set_slot(self, slot : int, img : Image.Image | None):
         """ Set a slot for an image. """
         if img is None:
@@ -69,7 +74,7 @@ class ClientLogic:
             buffer = io.BytesIO()
             img.save(buffer, format="gif")
             self._client_api.set_slot(slot, buffer.getvalue())
-            self._have_slot[slot] = False
+            self._have_slot[slot] = True
 
 
     def process_set_slot_vid(self, slot : int, imgs : [Image], durations : [int]):
@@ -77,6 +82,7 @@ class ClientLogic:
         buffer = io.BytesIO()
         imgs[0].save(buffer, format="gif", save_all=True, append_images=imgs[1:], duration=durations, loop=0)
         self._client_api.set_slot(slot, buffer.getvalue())
+        self._have_slot[slot] = True
 
     def _send_live_img(self, img):
         buffer = io.BytesIO()
