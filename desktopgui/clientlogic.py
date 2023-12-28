@@ -8,6 +8,7 @@ from typing import Any
 from PIL import Image, ImageChops
 
 import clientapi
+from slotmanager import SlotType
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
@@ -73,7 +74,7 @@ class ClientLogic:
         else:
             buffer = io.BytesIO()
             img.save(buffer, format="gif")
-            self._client_api.set_slot(slot, buffer.getvalue())
+            self._client_api.set_slot(slot, SlotType.IMG, buffer.getvalue())
             self._have_slot[slot] = True
 
 
@@ -81,7 +82,7 @@ class ClientLogic:
         """ Set a slot for a video. """
         buffer = io.BytesIO()
         imgs[0].save(buffer, format="gif", save_all=True, append_images=imgs[1:], duration=durations, loop=0)
-        self._client_api.set_slot(slot, buffer.getvalue())
+        self._client_api.set_slot(slot, SlotType.VID, buffer.getvalue())
         self._have_slot[slot] = True
 
     def _send_live_img(self, img):
