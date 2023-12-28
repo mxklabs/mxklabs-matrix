@@ -15,6 +15,7 @@ from PIL import Image
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
 
+
 if __name__ == "__main__":
   # Need to initialise Pillow here to avoid bug.
   Image.preinit()

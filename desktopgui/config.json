@@ -1,4 +1,7 @@
 {
+  "user" : "matrix",
+  "group" : "matrix",
+  "slotDataDir" : "/home/matrix/.slot_data",
   "matrixWidth" : 128,
   "matrixHeight" : 128,
   "listenIP4Addr" : "0.0.0.0",
