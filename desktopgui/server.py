@@ -3,6 +3,23 @@ from flask import Flask, request
 def matrix_server(api):
     app = Flask('server')
 
+    @app.route("/slot/<slot_index>", methods=["DELETE"])
+    def clear_slot(slot_index):
+        try:
+            slot = int(slot_index)
+        except TypeError:
+            return f"{slot_index} provided couldn't be cast to int.", 400
+        try:
+            res = api.clear_slot(slot)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return str(e), 500
+        if res:
+            return "", 200
+        else:
+            return "", 500
+
     @app.route("/slot/<slot_index>", methods=["POST"])
     def set_slot(slot_index):
         try:

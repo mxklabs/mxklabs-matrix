@@ -26,6 +26,14 @@ class DeviceAPI:
     #self._device_gui = device_gui
     self.matrix_driver = matrix_driver
 
+  def clear_slot(self, slot_index : int) -> bool:
+    filename = SLOT_DATA_DIR / f'{slot_index}.gif'
+    try:
+      filename.unlink()
+      return True
+    except:
+      return False
+
   def set_slot(self, slot_index : int, gif_data : bytes | None) -> bool:
     filename = SLOT_DATA_DIR / f'{slot_index}.gif'
     if gif_data is None:
