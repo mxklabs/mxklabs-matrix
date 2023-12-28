@@ -1,4 +1,8 @@
-from flask import Flask, request
+import base64 
+
+from flask import Flask, request, jsonify
+
+from slotmanager import SlotType
 
 def matrix_server(api):
     app = Flask('server')
@@ -10,7 +14,7 @@ def matrix_server(api):
         except TypeError:
             return f"{slot_index} provided couldn't be cast to int.", 400
         try:
-            res = api.clear_slot(slot)
+            res = api.set_slot(slot, None, None)
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -26,10 +30,10 @@ def matrix_server(api):
             slot = int(slot_index)
         except TypeError:
             return f"{slot_index} provided couldn't be cast to int.", 400
-        data = request.get_data()
+        req = request.get_json()
         # print(gif_data, flush=True)
         try:
-            res = api.set_slot(slot, data)
+            res = api.set_slot(slot_index, SlotType(req["slotType"]), base64.b64decode(req["data"]))
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -43,20 +47,20 @@ def matrix_server(api):
     def get_slot(slot_index):
         try:
             slot = int(slot_index)
-        except TypeError:
-            return f"{slot_index} provided couldn't be cast to int.", 400
-        # gif_data = request.get_data()
-        # print(gif_data, flush=True)
-        try:
-            res, gif_data = api.get_slot(slot)
+            api_res = api.get_slot(slot)
+            if api_res is None:
+                return '', 204
+            else:
+                slot_type, gif_data = api_res
+                return jsonify({
+                  "slotType" : int(slot_type),
+                  "data" : base64.b64encode(gif_data).decode('ascii')
+                }), 200
         except Exception as e:
             import traceback
             traceback.print_exc()
             return str(e), 500
-        if res:
-            return gif_data, 200
-        else:
-            return '', 204
+        
 
     @app.route("/live", methods=["POST"])
     def set_live():

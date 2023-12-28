@@ -1,4 +1,6 @@
 import io
+import json
+import pathlib
 import time
 import threading
 
@@ -27,7 +29,7 @@ class DisplayManager:
     """ Object responsible for deciding what to display on the matrix. """
     def __init__(self, driver : MatrixDriver | PygameDriver, slot_manager : SlotManager):
         self._driver = driver
-        self._mode = Mode.DARK
+        self._mode = DisplayManagerMode.DARK
         self._slot_manager = slot_manager
 
         self._thread = None
@@ -53,7 +55,6 @@ class DisplayManager:
             img = Image.open(io.BytesIO(slot_data))
             self._thread = threading.Thread(target=self._run_single_slot, args=(img, self._thread_kill_event))
             self._thread.start()
-
         self._mode = DisplayManagerMode.SHOW_SLOT
 
     def process_go_round_robin(self):

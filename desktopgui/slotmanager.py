@@ -53,6 +53,12 @@ class FileBackedSlotManager(SlotManager):
         os.chmod(self.SLOT_DATA_DIR, 0o777)
 
 
+        self.SLOT_DATA_DIR = pathlib.Path(CONFIG['slotDataDir'])
+        self.SLOT_DATA_DIR.mkdir(parents=True, exist_ok=True)
+        shutil.chown(self.SLOT_DATA_DIR, user=CONFIG['user'], group=CONFIG['group'])
+        os.chmod(self.SLOT_DATA_DIR, 0o777)
+
+
     def _file_backed_set_slot(self, slot : int, slot_type : SlotType, data : bytes | None) -> bool:
         """ Write a file to disk. """
         # TODO: Should check if the data matches the extension.
