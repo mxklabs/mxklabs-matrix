@@ -26,17 +26,15 @@ class ClientAPI:
     self.base_url = base_url
     self.matrix_driver = None
 
-  def clear_slot(self, slot_index : int) -> bool:
-    res = requests.delete(f"{self.base_url}/slot/{slot_index}", timeout=TIMEOUT)
-    if res.status_code != 200:
-      print(res.content)
-    return res.status_code == 200
-
   def set_slot(self, slot : int, slot_type : SlotType, data : bytes | None) -> bool:
+    fun = requests.post if data is not None else requests.delete
     json_data = {"slotType": int(slot_type), "data": base64.b64encode(data).decode('ascii') if data is not None else ''}
-    res = requests.post(f"{self.base_url}/slot/{slot}", json=json_data, timeout=TIMEOUT)
+    res = fun(f"{self.base_url}/slot/{slot}", json=json_data, timeout=TIMEOUT)
     if res.status_code != 200:
       print(res.content)
+      return False
+    else:
+      return True
 
   def get_slot(self, slot_index : int) -> Tuple[SlotType, bytes] | None:
     res = requests.get(f"{self.base_url}/slot/{slot_index}", timeout=TIMEOUT)

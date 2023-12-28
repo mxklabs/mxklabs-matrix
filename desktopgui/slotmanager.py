@@ -24,6 +24,12 @@ class SlotManager:
 
   def __init__(self, slot_setter : Callable, slot_getter : Callable):
     """ Initialise slot manager. """
+    """
+        For _slots,
+        * None means we haven't checked yet.
+        * (SlotType, bytes) for SlotType == NULL and bytes=None means the slot is empty. 
+        * (SlotType, bytes) for SlotType != NULL means we have checked and it's that. 
+    """
     self._slots = [None] * CONFIG['numSlots']
     self._slot_setter = slot_setter
     self._slot_getter = slot_getter
@@ -35,9 +41,10 @@ class SlotManager:
   def set_slot(self, slot : int, slot_type : SlotType, data : bytes | None) -> bool:
     """ Set a slot (or fail). """
     res = self._slot_setter(slot, slot_type, data)
+    print(res)
     if res:
       if data is None:
-        self._slots[slot] = None
+        self._slots[slot] = (SlotType.NULL, None)
       else:
         self._slots[slot] = (slot_type, bytes)
     return res
@@ -45,10 +52,16 @@ class SlotManager:
   def get_slot(self, slot : int) -> Tuple[SlotType, bytes] | None:
     """ Get a slot (or fail). """
     if self._slots[slot] is not None:
-        return self._slots[slot]
+        if self._slots[slot][0] != SlotType.NULL:
+            return self._slots[slot]
+        else:
+            return None
     else:
         res = self._slot_getter(slot)
-        self._slots[slot] = res
+        if res is None:
+            self._slots[slot] = (SlotType.NULL, None)
+        else:
+            self._slots[slot] = res
         return res
     return
 
