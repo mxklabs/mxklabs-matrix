@@ -61,17 +61,20 @@ class FileBackedSlotManager(SlotManager):
 
     def _file_backed_set_slot(self, slot : int, slot_type : SlotType, data : bytes | None) -> bool:
         """ Write a file to disk. """
+        print(f"Writing slot {slot} of type {slot_type} ({type(slot_type)})")
         # TODO: Should check if the data matches the extension.
         try:
             # Delete what is there.
             possible_filenames = [ (slot_type, self.SLOT_DATA_DIR / f'{slot}.{ext}') for slot_type, ext in FileBackedSlotManager.EXT_MAP.items()]
-            for slot_type, filename in possible_filenames:
+            for _, filename in possible_filenames:
                 if filename.exists():
                     filename.unlink()
 
             # Add new file if we have data.
             if data is not None:
+                print(f"BEFORE {slot_type} ({type(slot_type)})")
                 ext = FileBackedSlotManager.EXT_MAP[slot_type]
+                print(f"EXT {ext} ({FileBackedSlotManager.EXT_MAP})")
                 filename = self.SLOT_DATA_DIR / f'{slot}.{ext}'
                 with open(filename, 'wb') as f:
                     f.write(data)

@@ -33,7 +33,7 @@ def matrix_server(api):
         req = request.get_json()
         # print(gif_data, flush=True)
         try:
-            res = api.set_slot(slot_index, SlotType(req["slotType"]), base64.b64decode(req["data"]))
+            res = api.set_slot(slot, SlotType(req["slotType"]), base64.b64decode(req["data"]))
         except Exception as e:
             import traceback
             traceback.print_exc()
