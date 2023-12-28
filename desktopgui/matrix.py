@@ -37,7 +37,6 @@ def reset():
 def run(f, *args, **kwargs):
     connect(*args, **kwargs)
     is_pygame = isinstance(api.matrix_driver, PygameDriver)
-    print(is_pygame)
     func_thread = threading.Thread(target = f)
     func_thread.start()
     if is_pygame:
@@ -47,6 +46,7 @@ def run(f, *args, **kwargs):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     done = True
+                    break
             pygame.display.flip()
     func_thread.join()
 

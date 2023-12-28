@@ -6,26 +6,26 @@ import shutil
 import sys
 from enum import IntEnum
 
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 
 from PIL import Image
-
-from displaymanager import DisplayManager
-from slotmanager import SlotManager, SlotType
+if TYPE_CHECKING:
+    from displaymanager import DisplayManager
+    from slotmanager import SlotManager, SlotType
 
 class DeviceAPI:
     """ This interface exists because it's a useful abstraction for the purpose of
         simulating with a PyGame-based matrix driver. """
-    def __init__(self, display_manager : DisplayManager, slot_manager : SlotManager):
+    def __init__(self, display_manager : 'DisplayManager', slot_manager : 'SlotManager'):
         #self._device_gui = device_gui
         # self.matrix_driver = matrix_driver
         self._display_manager = display_manager
         self._slot_manager = slot_manager
 
-    def set_slot(self, slot : int, slot_type : SlotType, data : bytes | None) -> bool:
+    def set_slot(self, slot : int, slot_type : 'SlotType', data : bytes | None) -> bool:
         return self._slot_manager.set_slot(slot, slot_type, data)
 
-    def get_slot(self, slot_index : int) -> Tuple[SlotType, bytes] | None:
+    def get_slot(self, slot_index : int) -> Tuple['SlotType', bytes] | None:
         return self._slot_manager.get_slot(slot_index)
 
     def go_slot(self, slot_index : int) -> None:

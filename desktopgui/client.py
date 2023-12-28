@@ -313,6 +313,62 @@ def main(width=128, height=128):
   client_app = ClientApp(client_logic, slot_manager)
   app.exec()
 
+def sim(width=128, height=128):
+  import clientlogic
+  import deviceapi
+  import displaymanager
+  from matrix import PygameDriver
+  import slotmanager
+
+  import pygame
+
+  app = QtWidgets.QApplication(sys.argv)
+  pygame_driver = PygameDriver()
+  backend_slot_manager = slotmanager.MemoryBackedSlotManager()
+  display_manager = displaymanager.DisplayManager(pygame_driver, backend_slot_manager)
+  device_api = deviceapi.DeviceAPI(display_manager, backend_slot_manager)
+  frontend_slot_manager = slotmanager.HTTPBackedSlotManager(device_api)
+  client_logic = clientlogic.ClientLogic(device_api, frontend_slot_manager)
+  client_app = ClientApp(client_logic, frontend_slot_manager)
+  pg_update_timer = QtCore.QTimer()
+
+  def pygame_update():
+    try:
+        pygame.display.flip()
+    except pygame.error:
+       pygame.display.set_mode((256,256))
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        pygame.quit()
+        app.quit()
+        break
+  
+  def _set_screen_area(width=128, height=128, resizable=False, fixed_ratio=True):
+    pygame.quit()
+    pygame.init()
+    pg_update_timer.stop()
+    ClientApp._set_screen_area(client_app, width, height, resizable, fixed_ratio=False)
+    pg_update_timer.start(30)
+    pygame.quit()
+    pygame.init()
+    pygame_driver.game = pygame.display.set_mode((256,256))
+
+  client_app._set_screen_area = _set_screen_area
+
+  pg_update_timer.timeout.connect(pygame_update)
+  pg_update_timer.start(30)
+  app.exec()
+  pg_update_timer.stop()
+  pygame.quit()
+
 
 if __name__ == "__main__":
-  main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--simulate", action="store_true",
+                        help="Simulate the matrix with pygame")
+    args = parser.parse_args()
+    if args.simulate:
+        sim()
+    else:
+       main()

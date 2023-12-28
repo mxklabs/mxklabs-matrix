@@ -10,6 +10,7 @@ from PIL import ImageEnhance
 
 BORDER_WIDTH = 1
 MAX_SIZE = (1920, 1080) if os.name == "nt" else (1280, 780)
+FLAGS = pygame.FULLSCREEN if os.name == "nt" else None
 
 class MousePositionContext:
     """Specifies where the mouse is relative to the selection along 1 axis.
@@ -190,7 +191,6 @@ def main(width = 128, height = 128, is_resizable = False, fixed_ratio=True):
 
     size = (min(MAX_SIZE[0], image_size[0]), min(MAX_SIZE[1], image_size[1]))
     scroll_rect = pygame.Rect((0, 0, size[0], size[1]))
-
     display = pygame.display.set_mode(size)
     game = pygame.Surface(image_size)
     selection_rect = pygame.Rect((size[0]-width)//2, (size[1]-height)//2, width, height)
@@ -230,7 +230,6 @@ def main(width = 128, height = 128, is_resizable = False, fixed_ratio=True):
         display.blit(game, (0,0), area=scroll_rect)
         pygame.display.flip()
 
-    pygame.quit()
     return (selection_rect.left, selection_rect.top, selection_rect.right, selection_rect.bottom)
 
 if __name__ == "__main__":
