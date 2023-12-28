@@ -30,8 +30,7 @@ class ClientAPI:
     fun = requests.post if data is not None else requests.delete
     json_data = {"slotType": int(slot_type), "data": base64.b64encode(data).decode('ascii') if data is not None else ''}
     res = fun(f"{self.base_url}/slot/{slot}", json=json_data, timeout=TIMEOUT)
-    if res.status_code != 200:
-      print(res.content)
+    if res.status_code not in (200, 201):
       return False
     else:
       return True
