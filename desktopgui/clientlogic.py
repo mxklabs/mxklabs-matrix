@@ -2,11 +2,15 @@ from enum import Enum
 import io
 import json
 import os
+import pathlib
 from typing import Any
 
 from PIL import Image, ImageChops
 
 import clientapi
+
+with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
+    CONFIG = json.load(f)
 
 class Mode(Enum):
    LIVE_SNAPSHOT = 0
@@ -23,6 +27,16 @@ class ClientLogic:
         self._mode = Mode.DARK
         self._last_screen_img = None
         self._location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        self._have_slot = [False] * CONFIG['numSlots']
+
+        # Check if we got slots.
+        for i in range(CONFIG['numSlots']):
+            if self._client_api.get_slot(i) is not None:
+                self._have_slot[i] = True
+
+    def have_slot(self, slot : int) -> bool:
+        """ Check if we have a slot. """
+        return self._have_slot[slot]
 
     def process_screen_image(self, screen_img):
         """ Process a fresh image captured from the screen. """
@@ -46,11 +60,17 @@ class ClientLogic:
             self._send_live_img(self._last_screen_img)
         self._mode = Mode.LIVE_STREAM
 
-    def process_set_slot(self, slot : int, img : Image):
+    def process_set_slot(self, slot : int, img : Image.Image | None):
         """ Set a slot for an image. """
-        buffer = io.BytesIO()
-        img.save(buffer, format="gif")
-        self._client_api.set_slot(slot, buffer.getvalue())
+        if img is None:
+            self._client_api.set_slot(slot, None)
+            self._have_slot[slot] = False
+        else:
+            buffer = io.BytesIO()
+            img.save(buffer, format="gif")
+            self._client_api.set_slot(slot, buffer.getvalue())
+            self._have_slot[slot] = False
+
 
     def process_set_slot_vid(self, slot : int, imgs : [Image], durations : [int]):
         """ Set a slot for a video. """
@@ -63,7 +83,7 @@ class ClientLogic:
         img.save(buffer, format="gif")
         # TODO: update to better API.
         self._client_api.set_live(buffer.getvalue())
-    
+
     def update_client_data(self, tochange: {str: Any}):
         """Update client's local data.
         """

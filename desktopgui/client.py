@@ -141,7 +141,11 @@ class ClientApp(QtWidgets.QMainWindow):
     self._window.button_go_live_snapshot.setEnabled(self._grab_bbox is not None)
     self._window.button_go_live_stream.setEnabled(self._grab_bbox is not None)
     for slot in range(CONFIG['numSlots']):
-      self._slot_widgets[slot].setEnabled(self._grab_bbox is not None)
+      have_slot = self._client_handler.have_slot(slot)
+      self._slot_widgets[slot].button_clear.setEnabled(have_slot)
+      self._slot_widgets[slot].button_get_img.setEnabled(self._grab_bbox is not None)
+      self._slot_widgets[slot].button_get_vid.setEnabled(self._grab_bbox is not None)
+      self._slot_widgets[slot].button_go.setEnabled(have_slot)
     # self._window.button_take_video.setEnabled(False)
     # self._window.button_live.setEnabled(self._grab_bbox is not None)
     pass
