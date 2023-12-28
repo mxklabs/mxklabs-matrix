@@ -5,13 +5,15 @@ import time
 import threading
 
 from enum import IntEnum
+from typing import TYPE_CHECKING, Union
 
 from PIL import Image
 
-from clientapi import Mode
-# from slots import ImageSlot, GifSlot
-from matrixdriver import MatrixDriver
-from matrix import PygameDriver
+if TYPE_CHECKING:
+    from clientapi import Mode
+
+    from matrixdriver import MatrixDriver
+    from matrix import PygameDriver
 
 from slotmanager import SlotManager, SlotType
 
@@ -27,7 +29,7 @@ class DisplayManagerMode(IntEnum):
 
 class DisplayManager:
     """ Object responsible for deciding what to display on the matrix. """
-    def __init__(self, driver : MatrixDriver | PygameDriver, slot_manager : SlotManager):
+    def __init__(self, driver : Union['MatrixDriver', 'PygameDriver'], slot_manager : 'SlotManager'):
         self._driver = driver
         self._mode = DisplayManagerMode.DARK
         self._slot_manager = slot_manager

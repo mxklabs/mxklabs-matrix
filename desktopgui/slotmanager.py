@@ -141,12 +141,7 @@ class FileBackedSlotManager(SlotManager):
             self,
             slot_setter=self._file_backed_set_slot,
             slot_getter=self._file_backed_get_slot)
-        self.SLOT_DATA_DIR = pathlib.Path(CONFIG['slotDataDir'])
-        self.SLOT_DATA_DIR.mkdir(parents=True, exist_ok=True)
-        shutil.chown(self.SLOT_DATA_DIR, user=CONFIG['user'], group=CONFIG['group'])
-        os.chmod(self.SLOT_DATA_DIR, 0o777)
-
-
+        
         self.SLOT_DATA_DIR = pathlib.Path(CONFIG['slotDataDir'])
         self.SLOT_DATA_DIR.mkdir(parents=True, exist_ok=True)
         shutil.chown(self.SLOT_DATA_DIR, user=CONFIG['user'], group=CONFIG['group'])
@@ -187,3 +182,27 @@ class FileBackedSlotManager(SlotManager):
         except:
             return None
         return None
+
+class MemoryBackedSlotManager(SlotManager):
+    """ Slot manager (used on simulator) that backs up slot storage with a dict. """
+
+    EXT_MAP = { SlotType.IMG : 'png', SlotType.VID : 'gif'}
+
+    def __init__(self):
+        SlotManager.__init__(
+            self,
+            slot_setter=self._memory_backed_set_slot,
+            slot_getter=self._memory_backed_get_slot)
+        self._slots_store = {}
+
+    def _memory_backed_set_slot(self, slot : int, slot_type : SlotType, data : bytes | None) -> bool:
+        """ Write a file to dict. """
+        if data is None:
+            del self._slots_store[slot]
+        else:
+            self._slots_store[slot] = (slot_type, data)
+        return True
+
+    def _memory_backed_get_slot(self, slot : int) -> Tuple[SlotType, bytes] | None:
+        """ Work out what file we have. """
+        return self._slots_store.get(slot, None)
