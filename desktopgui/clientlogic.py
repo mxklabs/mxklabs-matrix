@@ -61,6 +61,11 @@ class ClientLogic:
             self._send_live_img(self._last_screen_img)
         self._mode = Mode.LIVE_STREAM
 
+    def process_go_slot(self, slot : int):
+        """ Display a specific slot. """
+        self._client_api.go_slot(slot)
+        self._mode = Mode.SLOT_SPECIFIC
+
     def process_clear_slot(self, slot : int):
         """ Clear a slot. """
         if self._client_api.clear_slot(slot):
@@ -76,7 +81,6 @@ class ClientLogic:
             img.save(buffer, format="gif")
             self._client_api.set_slot(slot, SlotType.IMG, buffer.getvalue())
             self._have_slot[slot] = True
-
 
     def process_set_slot_vid(self, slot : int, imgs : [Image], durations : [int]):
         """ Set a slot for a video. """

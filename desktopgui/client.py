@@ -101,6 +101,7 @@ class ClientApp(QtWidgets.QMainWindow):
       self._slot_widgets[-1].button_clear.clicked.connect(lambda _,slot=slot: self._process_slot_clear_click(slot))
       self._slot_widgets[-1].button_get_img.clicked.connect(lambda _,slot=slot: self._process_slot_get_img_click(slot))
       self._slot_widgets[-1].button_get_vid.clicked.connect(lambda _,slot=slot: self._process_slot_get_vid_click(slot))
+      self._slot_widgets[-1].button_go.clicked.connect(lambda _,slot=slot: self._process_slot_go_click(slot))
       self._window.scroll_area_slots_contents.layout().addWidget(self._slot_widgets[-1])
 
     self._window.scroll_area_slots_contents.layout().addStretch()
@@ -165,6 +166,9 @@ class ClientApp(QtWidgets.QMainWindow):
     assert self._preview_img is not None
     self._client_handler.process_set_slot(slot, self._preview_img)
     self._update_enabledness()
+
+  def _process_slot_go_click(self, slot):
+    self._client_handler.process_go_slot(slot)
 
   def _process_slot_get_vid_click(self, slot):
     self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
