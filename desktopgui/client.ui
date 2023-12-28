@@ -723,7 +723,7 @@ Stream</string>
               </spacer>
              </item>
              <item>
-              <widget class="QToolButton" name="button_save_slots">
+              <widget class="QToolButton" name="button_save_all_slots">
                <property name="enabled">
                 <bool>true</bool>
                </property>

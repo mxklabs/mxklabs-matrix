@@ -98,7 +98,6 @@ class SlotWidget(QtWidgets.QWidget):
             if num_local_files == 1:
                e.accept()
                res = self.parent._client_logic.process_slot_load(self.parent._window, self.slot, local_file)
-               self.parent._update_enabledness()
                return res
         if mime.hasHtml():
           parser = HTMLImgFinder()
@@ -106,14 +105,15 @@ class SlotWidget(QtWidgets.QWidget):
           if len(parser.imgs) >= 1:
             e.accept()
             res = self.parent._client_logic.process_slot_load_network(self.parent._window, self.slot, parser.imgs[0])
-            self.parent._update_enabledness()
             return res
         e.ignore()
 
 
 
 class ClientApp(QtWidgets.QMainWindow):
-  _screen_preview_thread_fired = QtCore.pyqtSignal(name="previewThreadFired")
+  # _slot_load = QtCore.pyqtSignal(int, name="slotLoad")
+  # _save_all = QtCore.pyqtSignal(name="saveAll")
+  # _load_all = QtCore.pyqtSignal(name="loadAll")
   _gif_grabber_done = QtCore.pyqtSignal(int, name="videoGrabberDone")
 
   def __init__(self, client_logic : 'ClientLogic', slot_manager : 'SlotManager'):
@@ -159,19 +159,15 @@ class ClientApp(QtWidgets.QMainWindow):
     self._window.button_go_live_stream.clicked.connect(self._button_go_live_stream_clicked)
     self._window.button_go_round_robin.clicked.connect(self._button_go_round_robin_clicked)
 
+    self._window.button_save_all_slots.clicked.connect(self._button_save_all_slots_clicked)
+    self._window.button_load_all_slots.clicked.connect(self._button_load_all_slots_clicked)
     self._window.button_go_black.clicked.connect(self._button_go_black_clicked)
-    # self._window.button_take_image.clicked.connect(self._take_image)
-    # self._window.button_live.clicked.connect(self._toggle_stream)
-
-    # slot_layout = QtWidgets.QVBoxLayout()
-
-    # .setLayout(slot_layout)#
 
     self._window.label_screen_preview.setMinimumSize(MATRIX_WIDTH, MATRIX_HEIGHT)
     self._window.label_screen_preview.setMaximumSize(MATRIX_WIDTH, MATRIX_HEIGHT)
     self._window.layout().activate()
 
-    self._window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
+    # self._window.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     self._window.setFixedSize(self._window.size())
 
     self._slot_widgets = []
@@ -188,7 +184,9 @@ class ClientApp(QtWidgets.QMainWindow):
 
     self._window.scroll_area_slots_contents.layout().addStretch()
 
+    self._slot_manager.add_observer(self._update_enabledness)
     self._update_enabledness()
+
     #self._window.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize);
     self._window.show()
 
@@ -243,17 +241,27 @@ class ClientApp(QtWidgets.QMainWindow):
   def _button_go_round_robin_clicked(self):
     self._client_logic.process_go_round_robin()
 
+  def _button_save_all_slots_clicked(self):
+    filepath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Save Directory', str(pathlib.Path.home()), options=QtWidgets.QFileDialog.Option.DontUseNativeDialog)
+    if filepath == '':
+      return
+    self._slot_manager.save_all(filepath)
+
+  def _button_load_all_slots_clicked(self):
+    filepath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Load Directory', str(pathlib.Path.home()), options=QtWidgets.QFileDialog.Option.DontUseNativeDialog)
+    if filepath == '':
+      return
+    self._slot_manager.load_all(filepath)
+
   def _button_go_black_clicked(self):
     self._client_logic.process_go_black()
 
   def _process_slot_clear_click(self, slot):
     self._client_logic.process_set_slot_img(slot, None)
-    self._update_enabledness()
 
   def _process_slot_get_img_click(self, slot):
     assert self._preview_img is not None
     self._client_logic.process_set_slot_img(slot, self._preview_img)
-    self._update_enabledness()
 
   def _process_slot_go_click(self, slot):
     self._client_logic.process_go_slot(slot)
@@ -263,19 +271,16 @@ class ClientApp(QtWidgets.QMainWindow):
     print(f"Getting slot {slot} video.")
 
   def _process_slot_load(self, slot):
-      self._hide()
-      filepath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', filter="All valid types (*.jpg *.gif *.png);;Image/Video files (*.jpg *.gif *.png)")
-      self._show()
+      filepath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', filter="All valid types (*.jpg *.gif *.png);;Image/Video files (*.jpg *.gif *.png)", options=QtWidgets.QFileDialog.Option.DontUseNativeDialog)
       if filepath == '':
         return
       self._client_logic.process_slot_load(self._window, slot, filepath)
 
   def _process_gif_grabber_done(self, slot):
     imgs = self._gif_grabber.imgs()
-    durs = self._gif_grabber.durations()  
+    durs = self._gif_grabber.durations()
     self._client_logic.process_set_slot_vid(slot, imgs, durs)
     self._gif_grabber = None
-    self._update_enabledness()
 
   def _update_screen_preview(self):
     # Take an image.
