@@ -41,16 +41,17 @@ class DisplayManager:
             self._kill_thread()
 
         res = self._slot_manager.get_slot(slot)
-        if res is None:
+        if res is None or res[0] == SlotType.NULL:
             raise RuntimeError(f"Unable to get slot {slot}")
 
         slot_type, slot_data = res
+
 
         if slot_type == SlotType.IMG:
             # No thread required!
             img = Image.open(io.BytesIO(slot_data))
             self._driver.set_image(img)
-        else:
+        elif slot_type == SlotType.VID:
             # We need to worry about animation.
             img = Image.open(io.BytesIO(slot_data))
             self._thread_kill_event.clear()
@@ -145,6 +146,8 @@ class DisplayManager:
                 res = self._slot_manager.get_slot(slot)
                 if res is not None:
                     slot_type, slot_data = res
+                    if slot_type == SlotType.NULL:
+                        break
                     img = Image.open(io.BytesIO(slot_data))
                     if slot_type == SlotType.IMG:
                         self._run_single_slot_img(img, kill_event, minimumTime=CONFIG['minimumSlotTime'])
