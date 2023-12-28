@@ -8,12 +8,6 @@ from enum import IntEnum
 
 from PIL import Image
 
-class Mode(IntEnum):
-    OFF         = 0
-    ROUND_ROBIN = 1
-    SHOW_SLOT   = 2
-    LIVE        = 3
-
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
     SLOT_DATA_DIR = pathlib.Path(CONFIG['slotDataDir'])
@@ -46,9 +40,6 @@ class DeviceAPI:
         return True, f.read()
     except:
       return False, None
-
-  def set_mode(self, mode : Mode, slot : int | None) -> bool:
-    pass
 
   def set_live(self, gif_data : bytes) -> bool:
     if gif_data is None:
