@@ -3,7 +3,7 @@ import os
 import pathlib
 import shutil
 
-from enum import IntEnum
+
 from typing import Callable, Tuple
 from os import PathLike
 
@@ -13,21 +13,18 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from clientapi import ClientAPI
 
+from slots import SlotType, Slot
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
 
 
-class SlotType(IntEnum):
-  NULL        = 0
-  IMG         = 1
-  VID         = 2
-
 
 class SlotManager(Observable):
 
     def __init__(self, slot_setter : Callable, slot_getter : Callable):
-        """ Initialise slot manager. """
+        """ Initialise slot mana
+        ger. """
         """
             For _slots,
             * None means we haven't checked yet.
@@ -78,21 +75,15 @@ class SlotManager(Observable):
     def save_all(self, dir_path : PathLike):
         """ Save all slots to a directory. """
         for slot in range(CONFIG['numSlots']):
-            png_filename = os.path.join(dir_path, f'{slot}.png')
-            if png_filename.exists():
-                png_filename.unlink()
-            if gif_filename.exists():
-                png_filename.unlink()
-            gif_filename = os.path.join(dir_path, f'{slot}.gif')
+            for file in os.listdir(dir_path):
+                if file.split(".")[0] == str(slot):
+                    filepath = os.path.join(dir_path, file)
+                    os.remove(filepath)
+
             res = self.get_slot(slot)
             if res is not None:
                 slot_type, data = res
-                if slot_type == SlotType.IMG:
-                    ext = 'png'
-                elif slot_type == SlotType.VID:
-                    ext = 'gif'
-                else:
-                    raise RuntimeError(f"Unknown slot type {slot_type}")
+                ext = Slot.from_bytes(slot_type, data).ext()
                 filename = os.path.join(dir_path, f'{slot}.{ext}')
                 with open(filename, 'wb') as f:
                     f.write(data)
@@ -100,23 +91,32 @@ class SlotManager(Observable):
     def load_all(self, dir_path : PathLike):
         """ Load slots from a directory. """
         for slot in range(CONFIG['numSlots']):
-            png_filename = os.path.join(dir_path, f'{slot}.png')
-            gif_filename = os.path.join(dir_path, f'{slot}.gif')
-            if os.path.exists(png_filename):
-                # It's a .png!
-                slot_type = SlotType.IMG
-                with open(png_filename, 'rb') as f:
-                    slot_data = f.read()
-                self.set_slot(slot, slot_type, slot_data)
-            elif os.path.exists(gif_filename):
-                # It's a .gif!
-                slot_type = SlotType.VID
-                with open(gif_filename, 'rb') as f:
-                    slot_data = f.read()
-                self.set_slot(slot, slot_type, slot_data)
+            for ext, slot_type in Slot.EXT_TO_SLOT_TYPE.items():
+                filename = os.path.join(dir_path, f"{slot}.{ext}")
+                if os.path.exists(filename):
+                    with open(filename, "rb") as f:
+                        slot_data = f.read()
+                    self.set_slot(slot, slot_type, slot_data)
+                    break
             else:
-                # Nothing to see here!
                 self.set_slot(slot, SlotType.NULL, None)
+            #  png_filename = os.path.join(dir_path, f'{slot}.png')
+            #  gif_filename = os.path.join(dir_path, f'{slot}.gif')
+            #  if os.path.exists(png_filename):
+            #      # It's a .png!
+            #      slot_type = SlotType.IMG
+            #      with open(png_filename, 'rb') as f:
+            #          slot_data = f.read()
+            #      self.set_slot(slot, slot_type, slot_data)
+            #  elif os.path.exists(gif_filename):
+            #      # It's a .gif!
+            #      slot_type = SlotType.VID
+            #      with open(gif_filename, 'rb') as f:
+            #          slot_data = f.read()
+            #      self.set_slot(slot, slot_type, slot_data)
+            #  else:
+            #      # Nothing to see here!
+            #      self.set_slot(slot, SlotType.NULL, None)
 
 class HTTPBackedSlotManager(SlotManager):
     """ Slot manager (used on client) that backs up slot storage by HTTP
@@ -133,8 +133,6 @@ class HTTPBackedSlotManager(SlotManager):
 class FileBackedSlotManager(SlotManager):
     """ Slot manager (used on device) that backs up slot storage by
         storing/loading files on disk. """
-
-    EXT_MAP = { SlotType.IMG : 'png', SlotType.VID : 'gif'}
 
     def __init__(self):
         SlotManager.__init__(
@@ -153,7 +151,7 @@ class FileBackedSlotManager(SlotManager):
         # TODO: Should check if the data matches the extension.
         try:
             # Delete what is there.
-            possible_filenames = [ (slot_type, self.SLOT_DATA_DIR / f'{slot}.{ext}') for slot_type, ext in FileBackedSlotManager.EXT_MAP.items()]
+            possible_filenames = [ (slot_type, self.SLOT_DATA_DIR / f'{slot}.{ext}') for ext, slot_type in Slot.EXT_TO_SLOT_TYPE.items()]
             for _, filename in possible_filenames:
                 if filename.exists():
                     filename.unlink()
@@ -174,7 +172,7 @@ class FileBackedSlotManager(SlotManager):
     def _file_backed_get_slot(self, slot : int) -> Tuple[SlotType, bytes] | None:
         """ Work out what file we have. """
         try:
-            possible_filenames = [ (slot_type, self.SLOT_DATA_DIR / f'{slot}.{ext}') for slot_type, ext in FileBackedSlotManager.EXT_MAP.items()]
+            possible_filenames = [ (slot_type, self.SLOT_DATA_DIR / f'{slot}.{ext}') for ext, slot_type in Slot.EXT_TO_SLOT_TYPE.items()]
             for slot_type, filename in possible_filenames:
                 if filename.exists():
                     with open(filename, 'rb') as f:
@@ -185,8 +183,6 @@ class FileBackedSlotManager(SlotManager):
 
 class MemoryBackedSlotManager(SlotManager):
     """ Slot manager (used on simulator) that backs up slot storage with a dict. """
-
-    EXT_MAP = { SlotType.IMG : 'png', SlotType.VID : 'gif'}
 
     def __init__(self):
         SlotManager.__init__(

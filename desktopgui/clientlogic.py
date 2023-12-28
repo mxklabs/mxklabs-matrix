@@ -1,3 +1,5 @@
+from slots import SlotType, Slot
+
 from enum import Enum
 import io
 import json
@@ -15,7 +17,6 @@ if TYPE_CHECKING:
     from clientapi import ClientAPI
     from slotmanager import SlotManager
 
-from slotmanager import SlotType
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
@@ -29,7 +30,7 @@ class Mode(Enum):
    SLOT_ROUND_ROBIN = 3
    DARK = 4
 
-EXT_TO_TYPE_MAP = {"png": SlotType.IMG, "jpg": SlotType.IMG, "gif": SlotType.IMG}
+
 
 class ClientLogic:
 
@@ -97,8 +98,8 @@ class ClientLogic:
     def process_slot_load(self, window, slot: int, filepath: str):
         file = pathlib.Path(filepath)
         ext = file.suffix.split(".")[-1]
-        slottype = EXT_TO_TYPE_MAP[ext]
-        if slottype != SlotType.IMG:
+        slottype = Slot.EXT_TO_SLOT_TYPE[ext]
+        if slottype not in  (SlotType.IMG, SlotType.VID):
             # Most types, we just upload the file.
             with open(file, "rb") as f:
                 self._slot_manager.set_slot(slot, slottype, f.read())
@@ -116,15 +117,15 @@ class ClientLogic:
                 for frame in range(img.n_frames):
                     img.seek(frame)
                     imgs.append(self.process_image(window, img))
-                    durations.append(img.info["duration"])
+                    durations.append(img.info.get("duration", 1000/15))
                 self.process_set_slot_vid(slot, imgs, durations)
 
     def process_slot_load_network(self, window, slot: int, url: str):
         file = pathlib.Path(urlunsplit(urlsplit(url)._replace(query="", fragment="")))
         ext = file.suffix.split(".")[-1]
-        slottype = EXT_TO_TYPE_MAP[ext]
+        slottype = Slot.EXT_TO_SLOT_TYPE[ext]
         response = requests.get(url)
-        if slottype != SlotType.IMG:
+        if slottype not in  (SlotType.IMG, SlotType.VID):
             # Most types, we just upload the file.
             self._slot_manager.set_slot(slot, slottype, response.content)
 
@@ -142,7 +143,7 @@ class ClientLogic:
                 for frame in range(frames):
                     img.seek(frame)
                     imgs.append(self.process_image(window, img))
-                    durations.append(img.info["duration"])
+                    durations.append(img.info.get("duration", 1000/15))
                 self.process_set_slot_vid(slot, imgs, durations)
 
     def process_image(self, window, img):
