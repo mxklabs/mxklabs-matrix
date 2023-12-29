@@ -15,7 +15,8 @@ if TYPE_CHECKING:
     from matrixdriver import MatrixDriver
     from matrix import PygameDriver
 
-from slotmanager import SlotManager, SlotType
+from slotmanager import SlotManager
+from slots import SlotType, Slot
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
@@ -48,17 +49,11 @@ class DisplayManager:
 
         slot_type, slot_data = res
 
+        slot = Slot.from_bytes(slot_type, slot_data)
 
-        if slot_type == SlotType.IMG:
-            # No thread required!
-            img = Image.open(io.BytesIO(slot_data))
-            self._driver.set_image(img)
-        elif slot_type == SlotType.VID:
-            # We need to worry about animation.
-            img = Image.open(io.BytesIO(slot_data))
-            self._thread_kill_event.clear()
-            self._thread = threading.Thread(target=self._run_single_slot_vid, args=(img, self._thread_kill_event))
-            self._thread.start()
+        self._thread_kill_event.clear()
+        self._thread = threading.Thread(target=slot.run_slot, args=(self._driver, self._thread_kill_event))
+        self._thread.start()
         self._mode = DisplayManagerMode.SHOW_SLOT
 
     def process_go_round_robin(self):
@@ -92,54 +87,52 @@ class DisplayManager:
       self._thread.join()
       self._thread = None
 
-    def _run_single_slot_img(self, img : Image.Image, kill_event : threading.Event, minimumTime: float | None=None):
-        """ Show static image in a single slot. Designed to run as a part
-            of a thread.  """
-        start_time = time.perf_counter()
+    # def _run_single_slot_img(self, img : Image.Image, kill_event : threading.Event, minimum_time: float | None=None):
+    #     """ Show static image in a single slot. Designed to run as a part
+    #         of a thread.  """
+    #     start_time = time.perf_counter()
 
-        # Set the image at the start.
-        self._driver.set_image(img)
+    #     # Set the image at the start.
+    #     self._driver.set_image(img)
 
-        while not kill_event.is_set():
-            now = time.perf_counter()
-            if (now - start_time) < minimumTime:
-                time.sleep(0.01)
-                continue
-            else:
-                break
+    #     while not kill_event.is_set():
+    #         now = time.perf_counter()
+    #         if (now - start_time) < minimum_time:
+    #             time.sleep(0.01)
+    #             continue
+    #         else:
+    #             break
 
-    def _run_single_slot_vid(self, img : Image.Image, kill_event : threading.Event, loop : bool=True, minimumTime: float | None=None):
-        """ Show animation in a single slot. Designed to run as part of a thread.
-            If loop==False then loop at least for the minimum time and then 
-            stop. Else loop indefinitely.  """
-        frame = 0
-        start_time = time.perf_counter()
+    # def _run_single_slot_vid(self, img : Image.Image, kill_event : threading.Event, loop : bool=True, minimum_time: float | None=None):
+    #     """ Show animation in a single slot. Designed to run as part of a thread.
+    #         If loop==False then loop at least for the minimum time and then 
+    #         stop. Else loop indefinitely.  """
+    #     frame = 0
+    #     start_time = time.perf_counter()
 
-        while not kill_event.is_set():
-            try:
-                img.seek(frame)
-                self._driver.set_image(img.convert('RGB'))
-                frame += 1
+    #     while not kill_event.is_set():
+    #         try:
+    #             img.seek(frame)
+    #             self._driver.set_image(img.convert('RGB'))
+    #             frame += 1
 
-                # Sleep for the frame duration.
-                time.sleep(img.info['duration'] / 1000.0)
+    #             # Sleep for the frame duration.
+    #             time.sleep(img.info['duration'] / 1000.0)
 
-            except EOFError:
-                now = time.perf_counter()
-                if loop or (now - start_time) < minimumTime:
-                    frame = 0
-                    continue
-                else:
-                    break
+    #         except EOFError:
+    #             now = time.perf_counter()
+    #             if loop or (now - start_time) < minimum_time:
+    #                 frame = 0
+    #                 continue
+    #             else:
+    #                 break
 
     def _run_round_robin(self, kill_event : threading.Event):
         """ Show animation in a single slot. """
 
-        img = None
         slot_type = None
         slot_data = None
         slot = 0
-        frame = 0
 
         while not kill_event.is_set():
 
@@ -150,11 +143,9 @@ class DisplayManager:
                     slot_type, slot_data = res
                     if slot_type == SlotType.NULL:
                         break
-                    img = Image.open(io.BytesIO(slot_data))
-                    if slot_type == SlotType.IMG:
-                        self._run_single_slot_img(img, kill_event, minimumTime=CONFIG['minimumSlotTime'])
-                    elif slot_type == SlotType.VID:
-                        self._run_single_slot_vid(img, kill_event, loop=False, minimumTime=CONFIG['minimumSlotTime'])
+                    slot_instance = Slot.from_bytes(slot_type, slot_data)
+                    slot_instance.run_slot(self._driver, kill_event, minimum_time=CONFIG['minimumSlotTime'])
+
                     slot = (slot + 1) % CONFIG['numSlots']
                     break
                 else:

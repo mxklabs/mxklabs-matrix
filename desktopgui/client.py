@@ -315,6 +315,7 @@ class ClientApp(QtWidgets.QMainWindow):
     self._gif_grabber = None
 
   def _process_gif_grabber_done(self, slot):
+    print("GIF DONE!")
     imgs = self._gif_grabber.imgs()
     durs = self._gif_grabber.durations()
     self._client_logic.process_set_slot_vid(slot, imgs, durs)
