@@ -32,7 +32,7 @@ if __name__ == "__main__":
   display_manager = displaymanager.DisplayManager(matrix_driver, slot_manager, state_manager)
   state_manager._state_handler = display_manager
 
-  state_saver = statemanager.StateSaver(state_manager)
+  state_saver = statemanager.FileBackedStateSaver(state_manager)
   state_manager.add_observer(state_saver)
   device_api = deviceapi.DeviceAPI(display_manager, slot_manager, state_manager)
   matrix_server = server.matrix_server(device_api)
