@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from clientlogic import ClientLogic
     from slotmanager import SlotManager
 
+import pygame
 from PyQt6 import QtCore, QtGui, QtWidgets, uic
 
 class HTMLImgFinder(html.parser.HTMLParser):
@@ -222,13 +223,15 @@ class ClientApp(QtWidgets.QMainWindow):
       self._screen_preview_timer.stop()
       self._screen_preview_timer.start(CONFIG['screenPreviewUpdateMillis'])
 
-  def _set_screen_area(self, width=128, height=128, resizable=False, fixed_ratio=True):
+  def _set_screen_area(self, width=128, height=128, resizable=False, fixed_ratio=True, pg_quit=True):
     """ Launch screengrabber pygame window to select area of the screen. """
     # Do something.
     try:
       self._hide()
       try:
         self._grab_bbox = screengrab(width=width, height=height, is_resizable=resizable, fixed_ratio=fixed_ratio)
+        if pg_quit:
+           pygame.quit()
       except RuntimeError:
         pass # Don't update bbox if cancelling.
       self._update_enabledness()
@@ -395,7 +398,7 @@ def sim(width=128, height=128):
     pygame.quit()
     pygame.init()
     pg_update_timer.stop()
-    ClientApp._set_screen_area(client_app, width, height, resizable, fixed_ratio=False)
+    ClientApp._set_screen_area(client_app, width, height, resizable, fixed_ratio=fixed_ratio, pg_quit=False)
     pg_update_timer.start(30)
     pygame.quit()
     pygame.init()
