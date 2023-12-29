@@ -41,6 +41,19 @@ if __name__ == "__main__":
      "port": CONFIG['port'],
      "debug": False
   })
+    
+  state_json_filename = pathlib.Path(CONFIG['slotDataDir']) / "state.json"
+
+  try:
+      # Try to restore existing state.
+      if state_json_filename.is_file():
+          with open(state_json_filename, 'r') as f:
+            json_state = f.read()
+            state_manager.visit(json_state)
+  except:
+      import traceback
+      traceback.print_tb()
+      print(f"Unable to recover state from '{state_json_filename}'")
 
   server_thread.start()
 
