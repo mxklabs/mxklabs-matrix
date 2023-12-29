@@ -43,7 +43,7 @@ class StateManager(StateHandler, Observable):
         self._state_json = json.dumps({ "mode" : "black"})
 
         # Add an observer that prints the state when it changes.
-        self.add_observer(lambda: print(f"State: {self._state_json}", flush=True)))
+        self.add_observer(lambda: print(f"State: {self._state_json}", flush=True))
 
     def go_black(self) -> None:
         """ Make the screen black.
