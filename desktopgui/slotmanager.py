@@ -161,7 +161,7 @@ class FileBackedSlotManager(SlotManager):
                 return True
             else:
                 # Writing file.
-                ext = FileBackedSlotManager.EXT_MAP[slot_type]
+                ext = Slot.from_bytes(slot_type, data).ext()
                 filename = self.SLOT_DATA_DIR / f'{slot}.{ext}'
                 with open(filename, 'wb') as f:
                     f.write(data)

@@ -31,7 +31,7 @@ class ClientAPI:
     json_data = {"slotType": int(slot_type), "data": base64.b64encode(data).decode('ascii') if data is not None else ''}
     res = fun(f"{self.base_url}/slot/{slot}", json=json_data, timeout=TIMEOUT)
     if res.status_code not in (200, 201):
-      return False
+      raise RuntimeError(f"Server gave HTTP{res.status_code}: {res.content.decode('utf-8')}")
     else:
       return True
 
