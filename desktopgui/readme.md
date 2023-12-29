@@ -32,7 +32,7 @@ python /path/to/project/mxklabs-matrix/desktopgui/desktop.py
 
 ## Run
 
-Note: 
+Note:
 
 * You need to run as sudo priviledges to control GPIO 18, which is used for PWMing.
 * You need to pass in the full path of `device.py` (there is a bug somewhere that means Pathlib won't see a directory exists).
@@ -40,4 +40,44 @@ Note:
 So your command should look something like this.
 ```
 sudo /path/to/venv/bin/python /path/to/project/mxklabs-matrix/desktopgui/device.py
+```
+
+To run on startup (on Ubuntu 22) add a file called `/lib/systemd/system/matrixService.service` with the following contents:
+
+```
+[Unit]
+Description=Matrix Display
+After=multi-user.target
+[Service]
+User=root
+Type=simple
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory=/
+ExecStart=/home/matrix/.virtualenvs/mxklabs-matrix/bin/python /home/matrix/projects/mxklabs-matrix/desktopgui/device.py
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=42s
+[Install]
+WantedBy=multi-user.target
+```
+
+Then enable and start the service:
+```
+sudo systemctl daemon-reload
+sudo systemctl enable matrixService.service
+sudo systemctl start matrixService.service
+```
+
+To control the service you can do the following:
+```
+sudo systemctl status matrixService.service        # Check status
+sudo systemctl stop matrixService.service          # Stop it
+sudo systemctl start matrixService.service         # Start it
+sudo systemctl restart matrixService.service       # Restart it
+```
+
+To see logs:
+```
+journalctl -u matrixService.service
 ```
