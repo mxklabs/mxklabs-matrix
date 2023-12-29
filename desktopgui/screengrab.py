@@ -153,7 +153,7 @@ def handle_event(event, ctx, selection_rect, drag_state, scroll_rect, size):
                     if selection_rect.width < 128:
                         selection_rect.width = 128
                         drag_state["is_dragging"] = False
-                else:
+                if (drag_state["is_resizing_y"] and not drag_state["fixed_ratio"]) or not drag_state["is_resizing_x"]:
                     if "bottom" in drag_state["resize_anchor"]:
                         selection_rect.height -= event.rel[1]
                     else:
