@@ -298,7 +298,7 @@ class ClientApp(QtWidgets.QMainWindow):
     self._client_logic.process_go_slot(slot)
 
   def _process_slot_load(self, slot):
-      filepath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', filter="All valid types (*.jpg *.gif *.png);;Image/Video files (*.jpg *.gif *.png)", options=QtWidgets.QFileDialog.Option.DontUseNativeDialog)
+      filepath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', filter="All valid types (*.gif *.png *.txt);;Image/Video files (*.gif *.png);;Text files (*.txt)", options=QtWidgets.QFileDialog.Option.DontUseNativeDialog)
       if filepath == '':
         return
       self._client_logic.process_slot_load(self._window, slot, filepath)
@@ -365,52 +365,54 @@ def main(width=128, height=128):
   app.exec()
 
 def sim(width=128, height=128):
-  import clientlogic
-  import deviceapi
-  import displaymanager
-  from matrix import PygameDriver
-  import slotmanager
+    import clientlogic
+    import deviceapi
+    import displaymanager
+    from matrix import PygameDriver
+    import slotmanager
+    import statemanager
+    import pygame
 
-  import pygame
+    app = QtWidgets.QApplication(sys.argv)
+    pygame_driver = PygameDriver()
+    backend_slot_manager = slotmanager.MemoryBackedSlotManager()
+    state_manager = statemanager.StateManager(None)
+    display_manager = displaymanager.DisplayManager(pygame_driver, backend_slot_manager, state_manager)
+    state_manager._state_handler = display_manager
+    device_api = deviceapi.DeviceAPI(display_manager, backend_slot_manager, state_manager)
+    frontend_slot_manager = slotmanager.HTTPBackedSlotManager(device_api)
+    client_logic = clientlogic.ClientLogic(device_api, frontend_slot_manager)
+    client_app = ClientApp(client_logic, frontend_slot_manager)
+    pg_update_timer = QtCore.QTimer()
 
-  app = QtWidgets.QApplication(sys.argv)
-  pygame_driver = PygameDriver()
-  backend_slot_manager = slotmanager.MemoryBackedSlotManager()
-  display_manager = displaymanager.DisplayManager(pygame_driver, backend_slot_manager)
-  device_api = deviceapi.DeviceAPI(display_manager, backend_slot_manager)
-  frontend_slot_manager = slotmanager.HTTPBackedSlotManager(device_api)
-  client_logic = clientlogic.ClientLogic(device_api, frontend_slot_manager)
-  client_app = ClientApp(client_logic, frontend_slot_manager)
-  pg_update_timer = QtCore.QTimer()
+    def pygame_update():
+        try:
+            pygame.display.flip()
+        except pygame.error:
+            pygame.display.set_mode((256,256))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                app.quit()
+                break
 
-  def pygame_update():
-    try:
-        pygame.display.flip()
-    except pygame.error:
-       pygame.display.set_mode((256,256))
-    for event in pygame.event.get():
-      if event.type == pygame.QUIT:
+    def _set_screen_area(width=128, height=128, resizable=False, fixed_ratio=True):
         pygame.quit()
-        app.quit()
-        break
-  
-  def _set_screen_area(width=128, height=128, resizable=False, fixed_ratio=True):
-    pygame.quit()
-    pygame.init()
-    pg_update_timer.stop()
-    ClientApp._set_screen_area(client_app, width, height, resizable, fixed_ratio=fixed_ratio, pg_quit=False)
+        pygame.init()
+        pg_update_timer.stop()
+        ClientApp._set_screen_area(client_app, width, height, resizable, fixed_ratio=fixed_ratio, pg_quit=False)
+        pg_update_timer.start(30)
+        pygame.quit()
+        pygame.init()
+        pygame_driver.game = pygame.display.set_mode((256,256))
+
+    client_app._set_screen_area = _set_screen_area
+
+    pg_update_timer.timeout.connect(pygame_update)
     pg_update_timer.start(30)
+    app.exec()
+    pg_update_timer.stop()
     pygame.quit()
-    pygame.init()
-    pygame_driver.game = pygame.display.set_mode((256,256))
-
-  client_app._set_screen_area = _set_screen_area
-
-  pg_update_timer.timeout.connect(pygame_update)
-  pg_update_timer.start(30)
-  app.exec()
-  pg_update_timer.stop()
-  pygame.quit()
 
 
 if __name__ == "__main__":

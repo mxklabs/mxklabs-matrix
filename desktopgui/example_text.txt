@@ -1,0 +1,12 @@
+TEST!
+?fg #ff0000
+test2!
+?fg #ffffff
+?bg #0000ff
+This is test 3!
+?fg #000000
+?bg #ffffff
+Test 4 is inverted!
+?fg #22aa55
+?bg #dd3311
+test 5 test 5 test 5 test 5 test 5
