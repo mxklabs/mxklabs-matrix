@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 from slots import Slot, SlotType
 from statemanager import StateHandler
+from slots import Slot,SlotType
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
