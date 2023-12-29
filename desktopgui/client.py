@@ -108,6 +108,33 @@ class SlotWidget(QtWidgets.QWidget):
             return res
         e.ignore()
 
+class VidWaitDialog(QtWidgets.QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Capturing animation...")
+
+        QBtn = QtWidgets.QDialogButtonBox.StandardButton.Cancel | QtWidgets.QDialogButtonBox.StandardButton.Save
+
+        self._buttonBox = QtWidgets.QDialogButtonBox(QBtn)
+        self._buttonBox.accepted.connect(self.accept)
+        self._buttonBox.rejected.connect(self.reject)
+
+        self._layout = QtWidgets.QVBoxLayout()
+        self._layout.setContentsMargins(20, 20, 20, 20)
+        self._layout.setSpacing(20)
+        message = QtWidgets.QLabel("Either wait for the animation to loop and, or\npress 'Cancel' to cancel or press 'Save'\nto save the frames collected so far.")
+        self._layout.addWidget(message)
+        self._layout.addWidget(self._buttonBox)
+        self.setLayout(self._layout)
+
+    @property
+    def accepted(self):
+        return self._buttonBox.accepted
+
+    @property
+    def rejected(self):
+        return self._buttonBox.rejected
 
 
 class ClientApp(QtWidgets.QMainWindow):
@@ -132,6 +159,7 @@ class ClientApp(QtWidgets.QMainWindow):
 
     self._gif_grabber = None
     self._gif_grabber_done.connect(self._process_gif_grabber_done)
+    self._gif_grabber_dialog = None
 
     self._window.combo_resample_method.addItem("Nearest", Image.NEAREST)
     self._window.combo_resample_method.addItem("Bilinear", Image.BILINEAR)
@@ -266,20 +294,34 @@ class ClientApp(QtWidgets.QMainWindow):
   def _process_slot_go_click(self, slot):
     self._client_logic.process_go_slot(slot)
 
-  def _process_slot_get_vid_click(self, slot):
-    self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
-    print(f"Getting slot {slot} video.")
-
   def _process_slot_load(self, slot):
       filepath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', filter="All valid types (*.jpg *.gif *.png);;Image/Video files (*.jpg *.gif *.png)", options=QtWidgets.QFileDialog.Option.DontUseNativeDialog)
       if filepath == '':
         return
       self._client_logic.process_slot_load(self._window, slot, filepath)
 
+  def _process_slot_get_vid_click(self, slot):
+    self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
+    self._gif_grabber_dialog = VidWaitDialog()
+    self._gif_grabber_dialog.accepted.connect(self._gif_grabber.done)
+    self._gif_grabber_dialog.rejected.connect(self._process_gif_grabber_cancel)
+    self._gif_grabber_dialog.exec()
+
+  def _process_gif_grabber_cancel(self):
+    self._gif_grabber_dialog.hide()
+    self._gif_grabber_dialog.destroy()
+    self._gif_grabber_dialog = None
+    self._gif_grabber.cancel()
+    self._gif_grabber = None
+
   def _process_gif_grabber_done(self, slot):
     imgs = self._gif_grabber.imgs()
     durs = self._gif_grabber.durations()
     self._client_logic.process_set_slot_vid(slot, imgs, durs)
+
+    self._gif_grabber_dialog.hide()
+    self._gif_grabber_dialog.destroy()
+    self._gif_grabber_dialog = None
     self._gif_grabber = None
 
   def _update_screen_preview(self):
