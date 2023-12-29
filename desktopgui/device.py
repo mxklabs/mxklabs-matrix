@@ -11,6 +11,7 @@ import displaymanager
 import matrixdriver
 import server
 import slotmanager
+import statemanager
 
 from PIL import Image
 
@@ -25,8 +26,15 @@ if __name__ == "__main__":
 
   matrix_driver = matrixdriver.MatrixDriver()
   slot_manager = slotmanager.FileBackedSlotManager()
-  display_manager = displaymanager.DisplayManager(matrix_driver, slot_manager)
-  device_api = deviceapi.DeviceAPI(display_manager, slot_manager)
+
+  # Need a bit of a hack for circular dependency.
+  state_manager = statemanager.StateManager(None)
+  display_manager = displaymanager.DisplayManager(matrix_driver, slot_manager, state_manager)
+  state_manager._state_handler = display_manager
+
+  state_saver = statemanager.StateSaver(state_manager)
+  state_manager.add_observer(state_saver)
+  device_api = deviceapi.DeviceAPI(display_manager, slot_manager, state_manager)
   matrix_server = server.matrix_server(device_api)
   server_thread = threading.Thread(target=matrix_server, kwargs={
      "host": CONFIG['listenIP4Addr'],

@@ -17,28 +17,33 @@ if TYPE_CHECKING:
 
 from slotmanager import SlotManager
 from slots import SlotType, Slot
+from statemanager import StateHandler, StateManager
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
     CONFIG = json.load(f)
 
-class DisplayManagerMode(IntEnum):
-    """ Mode of display manager. """
-    DARK         = 0
-    SHOW_SLOT    = 1
-    ROUND_ROBIN  = 2
-    LIVE         = 3
-
-class DisplayManager:
+class DisplayManager(StateHandler):
     """ Object responsible for deciding what to display on the matrix. """
-    def __init__(self, driver : Union['MatrixDriver', 'PygameDriver'], slot_manager : 'SlotManager'):
+    def __init__(self, driver : Union['MatrixDriver', 'PygameDriver'], slot_manager : 'SlotManager', state_manager: StateManager):
         self._driver = driver
-        self._mode = DisplayManagerMode.DARK
         self._slot_manager = slot_manager
-
+        self._state_manager = state_manager
         self._thread = None
         self._thread_kill_event = threading.Event()
 
-    def process_go_slot(self, slot : int):
+    def go_black(self) -> None:
+        """ Set a black image. """
+        if self._thread is not None:
+            self._kill_thread()
+        self._driver.set_image(Image.new("RGB", (CONFIG['matrixWidth'], CONFIG['matrixHeight']), (0,0,0)))
+
+    def go_live(self) -> None:
+        """ Go live (start with a white image). """
+        if self._thread is not None:
+            self._kill_thread()
+        self._driver.set_image(Image.new("RGB", (CONFIG['matrixWidth'], CONFIG['matrixHeight']), (255,255,255)))
+
+    def go_slot(self, slot : int) -> None:
         """ Process when the user wants to show a specific slot. """
         if self._thread is not None:
             self._kill_thread()
@@ -54,9 +59,8 @@ class DisplayManager:
         self._thread_kill_event.clear()
         self._thread = threading.Thread(target=slot.run_slot, args=(self._driver, self._thread_kill_event))
         self._thread.start()
-        self._mode = DisplayManagerMode.SHOW_SLOT
 
-    def process_go_round_robin(self):
+    def go_round_robin(self) -> None:
         """ Do the slots in a round robin fashion. """
         if self._thread is not None:
             self._kill_thread()
@@ -65,21 +69,11 @@ class DisplayManager:
         self._thread_kill_event.clear()
         self._thread = threading.Thread(target=self._run_round_robin, args=(self._thread_kill_event,))
         self._thread.start()
-        self._mode = DisplayManagerMode.ROUND_ROBIN
 
     def process_live_img(self, img : Image.Image):
         """ Set a live image. """
-        if self._thread is not None:
-            self._kill_thread()
-        self._driver.set_image(img)
-        self._mode = DisplayManagerMode.LIVE
-
-    def process_go_black(self):
-        """ Set a black image. """
-        if self._thread is not None:
-            self._kill_thread()
-        self._driver.set_image(Image.new("RGB", (CONFIG['matrixWidth'], CONFIG['matrixHeight']), (0,0,0)))
-        self._mode = DisplayManagerMode.DARK
+        if self._state_manager.is_live():
+            self._driver.set_image(img)
 
     def _kill_thread(self):
       """ Kill the internal thread. """

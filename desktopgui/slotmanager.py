@@ -139,7 +139,7 @@ class FileBackedSlotManager(SlotManager):
             self,
             slot_setter=self._file_backed_set_slot,
             slot_getter=self._file_backed_get_slot)
-        
+
         self.SLOT_DATA_DIR = pathlib.Path(CONFIG['slotDataDir'])
         self.SLOT_DATA_DIR.mkdir(parents=True, exist_ok=True)
         shutil.chown(self.SLOT_DATA_DIR, user=CONFIG['user'], group=CONFIG['group'])
