@@ -151,9 +151,10 @@ class ClientLogic:
             resample_method = window.combo_resample_method.itemData(window.combo_resample_method.currentIndex())
             resize_function = window.combo_resize_method.itemData(window.combo_resize_method.currentIndex())
             img = resize_function(im=img, size=(MATRIX_WIDTH, MATRIX_HEIGHT), resample=resample_method)
+        img = img.convert("RGB")
         if window.checkbox_sharpen.isChecked():
             img = img.filter(ImageFilter.SHARPEN)
-        return img.convert("RGB")
+        return img
 
 
     def _send_live_img(self, img):

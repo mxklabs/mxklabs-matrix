@@ -109,8 +109,8 @@ class SlotWidget(QtWidgets.QWidget):
         e.ignore()
 
 class VidWaitDialog(QtWidgets.QDialog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent=parent)
 
         self.setWindowTitle("Capturing animation...")
 
@@ -302,7 +302,7 @@ class ClientApp(QtWidgets.QMainWindow):
 
   def _process_slot_get_vid_click(self, slot):
     self._gif_grabber = gifgrabber.GIFGrabber(callback=lambda slot=slot:self._gif_grabber_done.emit(slot))
-    self._gif_grabber_dialog = VidWaitDialog()
+    self._gif_grabber_dialog = VidWaitDialog(self)
     self._gif_grabber_dialog.accepted.connect(self._gif_grabber.done)
     self._gif_grabber_dialog.rejected.connect(self._process_gif_grabber_cancel)
     self._gif_grabber_dialog.exec()
