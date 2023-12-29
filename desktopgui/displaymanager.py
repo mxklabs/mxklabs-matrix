@@ -26,7 +26,7 @@ with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
 
 class DisplayManager(StateHandler):
     """ Object responsible for deciding what to display on the matrix. """
-    def __init__(self, driver : Union['MatrixDriver', 'PygameDriver'], slot_manager : 'SlotManager', state_manager: StateManager):
+    def __init__(self, driver : Union['MatrixDriver', 'PygameDriver'], slot_manager : 'SlotManager', state_manager: 'StateManager'):
         self._driver = driver
         self._slot_manager = slot_manager
         self._state_manager = state_manager
