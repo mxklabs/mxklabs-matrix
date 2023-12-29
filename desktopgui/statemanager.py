@@ -148,7 +148,7 @@ class FileBackedStateSaver:
         shutil.chown(self.SLOT_DATA_DIR, user=CONFIG['user'], group=CONFIG['group'])
         os.chmod(self.SLOT_DATA_DIR, 0o777)
 
-    def notify(self):
+    def __call__(self):
         """ Do the saving. """
         with open(self.SLOT_DATA_DIR / "state.json", "w") as f:
-            f.write(self._state_json)
+            f.write(self._state_manager.json())

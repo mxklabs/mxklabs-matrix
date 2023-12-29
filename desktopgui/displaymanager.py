@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from matrix import PygameDriver
 
     from slotmanager import SlotManager
-    from slots import SlotType, Slot
     from statemanager import StateManager
 
+from slots import Slot, SlotType
 from statemanager import StateHandler
 
 with open(pathlib.Path(__file__).parents[0] / "config.json", "r") as f:
